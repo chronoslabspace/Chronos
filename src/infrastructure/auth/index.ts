@@ -1,0 +1,1 @@
+export { SupabaseAuthService, authService } from "./SupabaseAuthService";
