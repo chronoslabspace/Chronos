@@ -24,7 +24,8 @@ type WorkspaceContextValue = {
     metadata?: Record<string, unknown>;
   }) => Promise<void>;
   addNote: (title: string, content: string) => Promise<void>;
-  runSimulation: (objective: string) => Promise<void>;
+  runSimulation: (objective: string, constraints?: string[]) => Promise<void>;
+  rerunSimulation: (parentSimulationId: string, constraints?: string[]) => Promise<string | null>;
   refresh: () => Promise<void>;
 };
 
@@ -47,7 +48,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       setOwnerId(user.id);
-      setHome(workspaceService.load(user.id));
+      // Prefers Supabase; falls back to localStorage
+      const loaded = await workspaceService.load(user.id);
+      setHome(loaded);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -64,12 +67,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   const withOwner = useCallback(
-    async (action: (id: string) => WorkspaceHome) => {
+    async (action: (id: string) => Promise<WorkspaceHome>) => {
       if (!ownerId) throw new Error("Not signed in.");
       setError(null);
       try {
-        const next = action(ownerId);
+        const next = await action(ownerId);
         setHome(next);
+        return next;
       } catch (err) {
         setError((err as Error).message);
         throw err;
@@ -97,8 +101,14 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       addNote: async (title, content) => {
         await withOwner((id) => workspaceService.addNote(id, title, content));
       },
-      runSimulation: async (objective) => {
-        await withOwner((id) => workspaceService.runSimulation(id, objective));
+      runSimulation: async (objective, constraints = []) => {
+        await withOwner((id) => workspaceService.runSimulation(id, objective, constraints));
+      },
+      rerunSimulation: async (parentSimulationId, constraints) => {
+        const next = await withOwner((id) =>
+          workspaceService.rerunSimulation(id, parentSimulationId, constraints)
+        );
+        return next.recentSimulations[0]?.id ?? null;
       },
     }),
     [ownerId, home, loading, error, refresh, withOwner]

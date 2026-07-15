@@ -1,48 +1,102 @@
-import { simulate } from "../../domain/chronos/startup-sim";
+import {
+  simulationEngine,
+  type SimulationConstraint,
+} from "../simulation/SimulationEngine";
 import type {
+  GoalRecord,
   KnowledgeRecord,
   KnowledgeType,
   NoteRecord,
   SimulationRecord,
-  WorkspaceGoalRecord,
   WorkspaceHome,
   WorkspaceRecord,
 } from "../../domain/workspace/types";
-import { LocalWorkspaceStore, localWorkspaceStore } from "../../infrastructure/repositories/LocalWorkspaceStore";
+import {
+  LocalWorkspaceStore,
+  localWorkspaceStore,
+} from "../../infrastructure/repositories/LocalWorkspaceStore";
+import {
+  SupabaseWorkspaceRepository,
+  supabaseWorkspaceRepository,
+} from "../../infrastructure/repositories/SupabaseWorkspaceRepository";
 
 function nowIso() {
   return new Date().toISOString();
 }
 
-function id(prefix: string) {
+/** Always UUID — required by Supabase uuid columns. */
+function uuid(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
-  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  // Fallback for non-crypto environments (tests)
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
+function emptyRelations(): Pick<WorkspaceHome, "futuresBySimulation" | "timelineBySimulation"> {
+  return { futuresBySimulation: {}, timelineBySimulation: {} };
+}
+
+export type WorkspaceServiceOptions = {
+  local?: LocalWorkspaceStore;
+  /** Pass null to disable remote (unit tests). */
+  remote?: SupabaseWorkspaceRepository | null;
+};
+
 /**
- * Foundation service for the product success metric:
- * create workspace → define goal → upload context → run simulation → resume later.
- *
- * Persistence is local-first (localStorage keyed by owner) so resume always works
- * in the browser. Supabase tables can be layered on without changing this API.
+ * Workspace HQ service.
+ * Dual-write: localStorage (instant resume) + Supabase (cloud persistence when online/auth'd).
+ * Load prefers Supabase, falls back to local.
  */
 export class WorkspaceService {
-  constructor(private readonly store: LocalWorkspaceStore = localWorkspaceStore) {}
+  private readonly local: LocalWorkspaceStore;
+  private readonly remote: SupabaseWorkspaceRepository | null;
 
-  load(ownerId: string): WorkspaceHome | null {
-    return this.store.get(ownerId);
+  constructor(options: WorkspaceServiceOptions | LocalWorkspaceStore = {}) {
+    // Back-compat: tests pass LocalWorkspaceStore directly
+    if (options instanceof LocalWorkspaceStore) {
+      this.local = options;
+      this.remote = null;
+    } else {
+      this.local = options.local ?? localWorkspaceStore;
+      this.remote =
+        options.remote === undefined ? supabaseWorkspaceRepository : options.remote;
+    }
   }
 
-  createWorkspace(ownerId: string, name: string): WorkspaceHome {
+  async load(ownerId: string): Promise<WorkspaceHome | null> {
+    if (this.remote) {
+      try {
+        const remote = await this.remote.load(ownerId);
+        if (remote) {
+          this.local.save(ownerId, remote);
+          return this.normalize(remote);
+        }
+      } catch (err) {
+        console.warn("[workspace] Supabase load failed; using local store.", err);
+      }
+    }
+    const local = this.local.get(ownerId);
+    return local ? this.normalize(local) : null;
+  }
+
+  async createWorkspace(
+    ownerId: string,
+    name: string,
+    description = ""
+  ): Promise<WorkspaceHome> {
     const trimmed = name.trim();
     if (!trimmed) throw new Error("Workspace name is required.");
 
     const workspace: WorkspaceRecord = {
-      id: id("ws"),
-      name: trimmed,
+      id: uuid(),
       owner_id: ownerId,
+      name: trimmed,
+      description: description.trim(),
       created_at: nowIso(),
     };
 
@@ -52,31 +106,36 @@ export class WorkspaceService {
       recentSimulations: [],
       knowledge: [],
       notes: [],
+      ...emptyRelations(),
     };
 
-    return this.store.save(ownerId, home);
+    return this.persist(ownerId, home);
   }
 
-  setGoal(ownerId: string, title: string, description = ""): WorkspaceHome {
-    const home = this.require(ownerId);
+  async setGoal(
+    ownerId: string,
+    title: string,
+    description = "",
+    priority = 1
+  ): Promise<WorkspaceHome> {
+    const home = await this.require(ownerId);
     const trimmed = title.trim();
     if (!trimmed) throw new Error("Goal title is required.");
 
-    const timestamp = nowIso();
-    const goal: WorkspaceGoalRecord = {
-      id: home.goal?.id ?? id("goal"),
+    const goal: GoalRecord = {
+      id: home.goal?.id ?? uuid(),
       workspace_id: home.workspace.id,
       title: trimmed,
       description: description.trim(),
       status: "active",
-      created_at: home.goal?.created_at ?? timestamp,
-      updated_at: timestamp,
+      priority,
+      created_at: home.goal?.created_at ?? nowIso(),
     };
 
-    return this.store.save(ownerId, { ...home, goal });
+    return this.persist(ownerId, { ...home, goal });
   }
 
-  addKnowledge(
+  async addKnowledge(
     ownerId: string,
     input: {
       type: KnowledgeType;
@@ -84,13 +143,13 @@ export class WorkspaceService {
       content?: string;
       metadata?: Record<string, unknown>;
     }
-  ): WorkspaceHome {
-    const home = this.require(ownerId);
+  ): Promise<WorkspaceHome> {
+    const home = await this.require(ownerId);
     const title = input.title.trim();
     if (!title) throw new Error("Knowledge title is required.");
 
     const record: KnowledgeRecord = {
-      id: id("knowledge"),
+      id: uuid(),
       workspace_id: home.workspace.id,
       type: input.type,
       title,
@@ -99,74 +158,227 @@ export class WorkspaceService {
       created_at: nowIso(),
     };
 
-    return this.store.save(ownerId, {
+    return this.persist(ownerId, {
       ...home,
       knowledge: [record, ...home.knowledge],
     });
   }
 
-  addNote(ownerId: string, title: string, content: string): WorkspaceHome {
-    const home = this.require(ownerId);
+  async addNote(ownerId: string, title: string, content: string): Promise<WorkspaceHome> {
+    const home = await this.require(ownerId);
     const trimmedTitle = title.trim();
     if (!trimmedTitle) throw new Error("Note title is required.");
 
-    const timestamp = nowIso();
     const note: NoteRecord = {
-      id: id("note"),
+      id: uuid(),
       workspace_id: home.workspace.id,
       title: trimmedTitle,
       content: content.trim(),
-      created_at: timestamp,
-      updated_at: timestamp,
+      created_at: nowIso(),
     };
 
-    return this.store.save(ownerId, {
+    const knowledgeNote: KnowledgeRecord = {
+      id: uuid(),
+      workspace_id: home.workspace.id,
+      type: "note",
+      title: trimmedTitle,
+      content: content.trim(),
+      metadata: { note_id: note.id },
+      created_at: note.created_at,
+    };
+
+    return this.persist(ownerId, {
       ...home,
       notes: [note, ...home.notes],
+      knowledge: [knowledgeNote, ...home.knowledge],
     });
   }
 
   /**
-   * Runs a deterministic temporal simulation for an objective and appends it
-   * to the workspace so the user can return to it later.
+   * Runs the Chronos simulation engine and saves persistent memory:
+   * Workspace → Simulation (versioned) → Futures → Report
    */
-  runSimulation(ownerId: string, objective: string): WorkspaceHome {
-    const home = this.require(ownerId);
+  async runSimulation(
+    ownerId: string,
+    objective: string,
+    constraintLines: string[] = [],
+    options: { parentSimulationId?: string } = {}
+  ): Promise<WorkspaceHome> {
+    const home = await this.require(ownerId);
     const title = objective.trim();
     if (!title) throw new Error("Simulation objective is required.");
 
-    const context = [
-      home.goal?.title,
-      home.goal?.description,
-      ...home.knowledge.map((k) => `${k.type}: ${k.title}`),
-      ...home.notes.map((n) => n.title),
-    ]
-      .filter(Boolean)
-      .join("\n");
+    const parent = options.parentSimulationId
+      ? home.recentSimulations.find((s) => s.id === options.parentSimulationId)
+      : undefined;
 
-    const result = simulate([title, context].filter(Boolean).join("\n\n"));
-    const sim: SimulationRecord = {
-      id: id("sim"),
+    const lineageId = parent?.lineage_id ?? uuid();
+    const version = parent
+      ? Math.max(
+          0,
+          ...home.recentSimulations
+            .filter((s) => (s.lineage_id || s.id) === (parent.lineage_id || parent.id))
+            .map((s) => s.version || 1)
+        ) + 1
+      : 1;
+
+    const simId = uuid();
+    const createdAt = nowIso();
+    const constraints = this.parseConstraints(
+      constraintLines.length
+        ? constraintLines
+        : parent && Array.isArray(parent.result.constraints)
+          ? (parent.result.constraints as string[]).map((c) => c.replace(/^(hard|soft):\s*/i, ""))
+          : []
+    );
+
+    const running: SimulationRecord = {
+      id: simId,
       workspace_id: home.workspace.id,
       goal_id: home.goal?.id ?? null,
-      status: "completed",
-      confidence: result.bestPath.probability,
-      title,
-      best_outcome: result.bestPath.name,
-      futures_count: result.pathsEvaluated,
-      created_at: nowIso(),
+      title: parent ? parent.title : title,
+      status: "running",
+      confidence: null,
+      result: {
+        tasks: [
+          { id: "plan", title: "Planner", status: "pending", phase: "plan" },
+          { id: "generate", title: "Generate futures", status: "pending", phase: "generate" },
+          { id: "evaluate", title: "Evaluate", status: "pending", phase: "evaluate" },
+          { id: "rank", title: "Rank", status: "pending", phase: "rank" },
+          { id: "collapse", title: "Best future", status: "pending", phase: "collapse" },
+        ],
+        constraints: constraints.map((c) => c.text),
+      },
+      created_at: createdAt,
+      version,
+      lineage_id: lineageId,
+      parent_simulation_id: parent?.id ?? null,
     };
 
-    return this.store.save(ownerId, {
+    await this.persist(ownerId, {
       ...home,
-      recentSimulations: [sim, ...home.recentSimulations],
+      recentSimulations: [running, ...home.recentSimulations],
+    });
+
+    const objectiveForEngine = parent ? parent.title : title;
+
+    const output = simulationEngine.run({
+      simulationId: simId,
+      workspaceId: home.workspace.id,
+      goal: home.goal,
+      objective: objectiveForEngine,
+      knowledge: home.knowledge,
+      notes: home.notes,
+      constraints,
+    });
+
+    const failed = output.tasks.some((t) => t.status === "failed");
+    const sim: SimulationRecord = {
+      id: simId,
+      workspace_id: home.workspace.id,
+      goal_id: home.goal?.id ?? null,
+      title: objectiveForEngine,
+      status: failed ? "failed" : "completed",
+      confidence: output.confidence,
+      result: {
+        best_future: output.best.name,
+        futures_count: output.futures.length,
+        category: output.category,
+        thesis: output.thesis,
+        recommendation: output.recommendation,
+        risks: output.risks,
+        tasks: output.tasks,
+        constraints: constraints.map((c) => `${c.kind}: ${c.text}`),
+        planner_tasks: output.plannerTaskTitles,
+        report_saved_at: createdAt,
+      },
+      created_at: createdAt,
+      version,
+      lineage_id: lineageId,
+      parent_simulation_id: parent?.id ?? null,
+    };
+
+    const latestHome = await this.require(ownerId);
+    return this.persist(ownerId, {
+      ...latestHome,
+      recentSimulations: latestHome.recentSimulations.map((s) => (s.id === simId ? sim : s)),
+      futuresBySimulation: {
+        ...latestHome.futuresBySimulation,
+        [simId]: output.futures,
+      },
+      timelineBySimulation: {
+        ...latestHome.timelineBySimulation,
+        [simId]: output.timeline,
+      },
     });
   }
 
-  private require(ownerId: string): WorkspaceHome {
-    const home = this.store.get(ownerId);
-    if (!home) throw new Error("Create a workspace first.");
-    return home;
+  async rerunSimulation(
+    ownerId: string,
+    parentSimulationId: string,
+    constraintLines?: string[]
+  ): Promise<WorkspaceHome> {
+    const home = await this.require(ownerId);
+    const parent = home.recentSimulations.find((s) => s.id === parentSimulationId);
+    if (!parent) throw new Error("Simulation not found in memory.");
+    const lines =
+      constraintLines ??
+      (Array.isArray(parent.result.constraints)
+        ? (parent.result.constraints as string[]).map((c) => c.replace(/^(hard|soft):\s*/i, ""))
+        : []);
+    return this.runSimulation(ownerId, parent.title, lines, { parentSimulationId });
+  }
+
+  private parseConstraints(lines: string[]): SimulationConstraint[] {
+    return lines
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((text, index) => ({
+        id: `c-${index}`,
+        text,
+        kind: /^(must|hard|required|no |never)/i.test(text) ? ("hard" as const) : ("soft" as const),
+      }));
+  }
+
+  private async require(ownerId: string): Promise<WorkspaceHome> {
+    // Prefer local for require after mutations (already written); fall back to load
+    const local = this.local.get(ownerId);
+    if (local) return this.normalize(local);
+    const loaded = await this.load(ownerId);
+    if (!loaded) throw new Error("Create a workspace first.");
+    return loaded;
+  }
+
+  private async persist(ownerId: string, home: WorkspaceHome): Promise<WorkspaceHome> {
+    const normalized = this.normalize(home);
+    this.local.save(ownerId, normalized);
+    if (this.remote) {
+      try {
+        await this.remote.save(normalized);
+      } catch (err) {
+        console.warn("[workspace] Supabase save failed; local copy kept.", err);
+      }
+    }
+    return normalized;
+  }
+
+  private normalize(home: WorkspaceHome): WorkspaceHome {
+    return {
+      ...home,
+      futuresBySimulation: home.futuresBySimulation ?? {},
+      timelineBySimulation: home.timelineBySimulation ?? {},
+      workspace: {
+        description: "",
+        ...home.workspace,
+      },
+      recentSimulations: home.recentSimulations.map((sim) => ({
+        ...sim,
+        version: sim.version ?? 1,
+        lineage_id: sim.lineage_id || sim.id,
+        parent_simulation_id: sim.parent_simulation_id ?? null,
+        result: sim.result ?? {},
+      })),
+    };
   }
 }
 

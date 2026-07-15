@@ -183,46 +183,55 @@ create policy "Users manage their own Chronos records"
 alter table simulation_cache enable row level security;
 
 -- ------------------------------------------------------------
--- Phase 1 Workspace MVP (relational product tables)
--- See also: supabase/migrations/20260715123000_workspace_mvp.sql
+-- Phase 2 Workspace product tables
+-- See: supabase/migrations/20260715140000_workspace_phase2.sql
 -- ------------------------------------------------------------
 create table if not exists public.workspaces (
   id uuid primary key default gen_random_uuid(),
-  name text not null,
   owner_id uuid not null references auth.users (id) on delete cascade,
+  name text not null,
+  description text not null default '',
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.workspace_goals (
+create table if not exists public.goals (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces (id) on delete cascade,
   title text not null,
   description text not null default '',
   status text not null default 'active'
     check (status in ('active', 'paused', 'completed', 'archived')),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  priority integer not null default 0,
+  created_at timestamptz not null default now()
 );
 
 create table if not exists public.simulations (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces (id) on delete cascade,
-  goal_id uuid references public.workspace_goals (id) on delete set null,
+  goal_id uuid references public.goals (id) on delete set null,
+  title text not null default '',
   status text not null default 'queued'
     check (status in ('queued', 'running', 'completed', 'failed')),
   confidence numeric(5, 4)
     check (confidence is null or (confidence >= 0 and confidence <= 1)),
-  title text not null default '',
-  best_outcome text,
-  futures_count integer not null default 0 check (futures_count >= 0),
+  result jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
+);
+
+create table if not exists public.futures (
+  id uuid primary key default gen_random_uuid(),
+  simulation_id uuid not null references public.simulations (id) on delete cascade,
+  name text not null,
+  score numeric(8, 4) not null default 0,
+  risk numeric(8, 4) not null default 0,
+  confidence numeric(5, 4) not null default 0,
+  summary text not null default ''
 );
 
 create table if not exists public.knowledge (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces (id) on delete cascade,
-  type text not null
-    check (type in ('pdf', 'note', 'website', 'research', 'other')),
+  type text not null check (type in ('pdf', 'url', 'note', 'markdown', 'txt', 'github')),
   title text not null,
   content text not null default '',
   metadata jsonb not null default '{}'::jsonb,
@@ -234,8 +243,16 @@ create table if not exists public.notes (
   workspace_id uuid not null references public.workspaces (id) on delete cascade,
   title text not null,
   content text not null default '',
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.timeline_nodes (
+  id uuid primary key default gen_random_uuid(),
+  simulation_id uuid not null references public.simulations (id) on delete cascade,
+  parent_id uuid references public.timeline_nodes (id) on delete cascade,
+  title text not null,
+  depth integer not null default 0,
+  score numeric(8, 4) not null default 0
 );
 
 -- ============================================================

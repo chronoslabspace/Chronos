@@ -11,6 +11,23 @@ export type Release = {
 
 const releases: Release[] = [
   {
+    version: "4.4.0",
+    date: "2026-07-15",
+    tag: "minor",
+    title: "Private workspace MVP",
+    summary:
+      "A usable path from sign-in to cumulative decisions: workspace HQ, knowledge library, simulation engine, future cards, and versioned memory—each gate shippable before the next, without building a full Workspace OS upfront.",
+    highlights: [
+      { label: "HQ", detail: "Authenticated /workspace dashboard: goal, quick actions, recent runs, knowledge summary, MVP progress rail" },
+      { label: "Schema", detail: "Supabase tables for workspaces, goals, simulations, futures, knowledge, notes, timeline_nodes (+ RLS)" },
+      { label: "Knowledge", detail: "RAG-lite library: PDF/MD/TXT upload, website & GitHub README import, markdown notes, keyword search" },
+      { label: "Engine", detail: "Plan → generate → evaluate → rank → best future; five ranked futures, risks, confidence, pipeline tasks" },
+      { label: "Timeline", detail: "Card timeline (not a graph): Goal → Future A ⭐ … D; click for summary, risk, confidence, next steps" },
+      { label: "Memory", detail: "Every run saved with lineage versions (v1/v2/v3); reopen report, re-run, compare across sessions" },
+      { label: "Auth", detail: "BrowserRouter + magic-link callback + password sign-in; sessions persist; GH Pages SPA 404 fallback" },
+    ],
+  },
+  {
     version: "4.3.0",
     date: "2026-07-08",
     tag: "minor",
