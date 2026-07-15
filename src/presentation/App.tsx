@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { HomePage } from "./components/HomePage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { LoginPage } from "./pages/LoginPage";
 
 // Route-level code splitting: the marketing shell ships first; large product,
 // documentation, and legal page compositions load only after navigation.
@@ -51,6 +52,7 @@ function App() {
   return (
     <HashRouter>
       <Routes>
+        <Route path="/login" element={<LoginPage />} />
         <Route element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="/core" element={lazyRoute(<CorePage />)} />
