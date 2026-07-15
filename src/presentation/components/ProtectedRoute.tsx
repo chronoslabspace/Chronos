@@ -3,8 +3,8 @@ import { Navigate } from "react-router-dom";
 import { authService } from "../../infrastructure/auth/SupabaseAuthService";
 
 /**
- * Route guard: redirects to home if user is not authenticated.
- * Shows loading state while checking auth status.
+ * Route guard: redirects to login if the user is not authenticated.
+ * Waits for Supabase auth init (including magic-link session recovery) before deciding.
  */
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -13,16 +13,25 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     let isMounted = true;
 
     async function checkAuth() {
-      const user = await authService.currentUser();
+      // getSession awaits client initialize (including magic-link URL recovery)
+      // and reads the local session without an extra network round-trip.
+      const session = await authService.currentSession();
       if (isMounted) {
-        setIsAuthenticated(!!user);
+        setIsAuthenticated(!!session?.user);
       }
     }
 
     checkAuth();
 
+    const { data } = authService.onAuthStateChange((_event, session) => {
+      if (isMounted) {
+        setIsAuthenticated(!!session?.user);
+      }
+    });
+
     return () => {
       isMounted = false;
+      data.subscription.unsubscribe();
     };
   }, []);
 
@@ -40,7 +49,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;

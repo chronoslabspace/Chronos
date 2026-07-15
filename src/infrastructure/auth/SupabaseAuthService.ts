@@ -27,6 +27,10 @@ export class SupabaseAuthService {
     });
   }
 
+  async signInWithPassword(email: string, password: string) {
+    return this.client.auth.signInWithPassword({ email, password });
+  }
+
   async signOut() {
     return this.client.auth.signOut();
   }
@@ -36,6 +40,24 @@ export class SupabaseAuthService {
   ) {
     return this.client.auth.onAuthStateChange(listener);
   }
+}
+
+/** Maps Supabase auth errors into short, user-facing copy. */
+export function formatAuthError(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes("rate limit") || lower.includes("email rate limit")) {
+    return (
+      "Email rate limit exceeded. Supabase's free email provider only allows a " +
+      "few magic links per hour. Wait about an hour, or sign in with email and password instead."
+    );
+  }
+  if (lower.includes("invalid login credentials")) {
+    return "Invalid email or password.";
+  }
+  if (lower.includes("email not confirmed")) {
+    return "Confirm your email before signing in, or use a magic link once the rate limit resets.";
+  }
+  return message;
 }
 
 export const authService = new SupabaseAuthService();

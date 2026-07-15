@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { authService } from "../../infrastructure/auth/SupabaseAuthService";
 import { ChronosCMark } from "./ChronosCMark";
 
 /**
@@ -6,6 +7,13 @@ import { ChronosCMark } from "./ChronosCMark";
  * Only authenticated users can access this route.
  */
 export function Dashboard() {
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await authService.signOut();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <section className="relative overflow-hidden bg-bg py-10 lg:py-16">
       <div className="mx-auto max-w-[1500px] px-6 lg:px-8">
@@ -17,7 +25,16 @@ export function Dashboard() {
               <div className="font-mono text-[9px] uppercase tracking-[0.24em] text-ink-faint">Private workspace dashboard</div>
             </div>
           </div>
-          <Link to="/core" className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink-dim transition hover:text-ink">Back to Core →</Link>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink-dim transition hover:text-ink"
+            >
+              Sign out
+            </button>
+            <Link to="/core" className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink-dim transition hover:text-ink">Back to Core →</Link>
+          </div>
         </div>
 
         <div className="relative min-h-[680px] overflow-hidden rounded-2xl border border-line bg-bg-soft">

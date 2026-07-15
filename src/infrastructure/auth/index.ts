@@ -1,1 +1,1 @@
-export { SupabaseAuthService, authService } from "./SupabaseAuthService";
+export { SupabaseAuthService, authService, formatAuthError } from "./SupabaseAuthService";
