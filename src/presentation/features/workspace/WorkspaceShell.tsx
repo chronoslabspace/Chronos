@@ -7,9 +7,8 @@ import { WorkspaceOnboarding } from "./WorkspaceOnboarding";
 
 const navItems = [
   { to: "/workspace", label: "Dashboard", end: true },
-  { to: "/workspace/knowledge", label: "Knowledge", end: false },
   { to: "/workspace/simulations", label: "Simulations", end: false },
-  { to: "/workspace/notes", label: "Notes", end: false },
+  { to: "/workspace/memory", label: "Memory", end: false },
   { to: "/workspace/settings", label: "Settings", end: false },
 ] as const;
 

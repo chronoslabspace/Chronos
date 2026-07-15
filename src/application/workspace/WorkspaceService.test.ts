@@ -10,60 +10,82 @@ describe("WorkspaceService success metric", () => {
   beforeEach(() => {
     localStorage.clear();
     store = new LocalWorkspaceStore();
-    service = new WorkspaceService(store);
+    // Local-only (no Supabase) for deterministic unit tests
+    service = new WorkspaceService({ local: store, remote: null });
   });
 
-  it("lets a user create a workspace, set a goal, add context, run a sim, and resume", () => {
-    expect(service.load(ownerId)).toBeNull();
+  it("lets a user create a workspace, set a goal, add context, run a sim, and resume", async () => {
+    expect(await service.load(ownerId)).toBeNull();
 
-    let home = service.createWorkspace(ownerId, "Chronos Lab");
+    let home = await service.createWorkspace(ownerId, "Chronos Lab", "Product HQ");
     expect(home.workspace.name).toBe("Chronos Lab");
+    expect(home.workspace.description).toBe("Product HQ");
     expect(home.goal).toBeNull();
     expect(home.recentSimulations).toEqual([]);
 
-    home = service.setGoal(ownerId, "Launch CLAB on Kickstart", "Public launch path");
+    home = await service.setGoal(ownerId, "Launch CLAB on Kickstart", "Public launch path", 1);
     expect(home.goal?.title).toBe("Launch CLAB on Kickstart");
     expect(home.goal?.status).toBe("active");
+    expect(home.goal?.priority).toBe(1);
 
-    home = service.addKnowledge(ownerId, {
+    home = await service.addKnowledge(ownerId, {
       type: "pdf",
       title: "Kickstart brief.pdf",
       content: "outline",
     });
-    home = service.addKnowledge(ownerId, {
-      type: "website",
+    home = await service.addKnowledge(ownerId, {
+      type: "url",
       title: "https://chronoslab.space",
       metadata: { url: "https://chronoslab.space" },
     });
-    home = service.addNote(ownerId, "Launch constraints", "Ship demo + waitlist");
-    expect(home.knowledge).toHaveLength(2);
+    home = await service.addNote(ownerId, "Launch constraints", "Ship demo + waitlist");
+    expect(home.knowledge.length).toBeGreaterThanOrEqual(3);
     expect(home.notes).toHaveLength(1);
 
-    home = service.runSimulation(ownerId, "Should we raise funding before Kickstart?");
+    home = await service.runSimulation(ownerId, "Should we raise funding before Kickstart?", [
+      "no raise before launch",
+    ]);
     expect(home.recentSimulations).toHaveLength(1);
-    expect(home.recentSimulations[0].status).toBe("completed");
-    expect(home.recentSimulations[0].title).toContain("funding");
-    expect(home.recentSimulations[0].futures_count).toBeGreaterThan(0);
-    expect(home.recentSimulations[0].best_outcome).toBeTruthy();
-    expect(home.recentSimulations[0].confidence).toBeGreaterThan(0);
+    const sim = home.recentSimulations[0];
+    expect(sim.status).toBe("completed");
+    expect(sim.title).toContain("funding");
+    expect(sim.version).toBe(1);
+    expect(sim.lineage_id).toBeTruthy();
+    expect(sim.parent_simulation_id).toBeNull();
+    expect(sim.result.futures_count).toBe(5);
+    expect(sim.result.best_future).toBeTruthy();
+    expect(sim.result.recommendation).toBeTruthy();
+    expect(Array.isArray(sim.result.risks)).toBe(true);
+    expect(Array.isArray(sim.result.tasks)).toBe(true);
+    expect(sim.confidence).toBeGreaterThan(0);
+    expect(home.futuresBySimulation[sim.id]).toHaveLength(5);
+    expect(home.timelineBySimulation[sim.id]?.length).toBeGreaterThan(0);
 
-    // Return later: new service instance, same store → full HQ restored
-    const resumed = new WorkspaceService(store).load(ownerId);
+    home = await service.rerunSimulation(ownerId, sim.id);
+    expect(home.recentSimulations).toHaveLength(2);
+    const v2 = home.recentSimulations[0];
+    expect(v2.version).toBe(2);
+    expect(v2.lineage_id).toBe(sim.lineage_id);
+    expect(v2.parent_simulation_id).toBe(sim.id);
+    expect(v2.status).toBe("completed");
+
+    const resumed = await new WorkspaceService({ local: store, remote: null }).load(ownerId);
     expect(resumed).not.toBeNull();
     expect(resumed?.workspace.name).toBe("Chronos Lab");
     expect(resumed?.goal?.title).toBe("Launch CLAB on Kickstart");
-    expect(resumed?.knowledge).toHaveLength(2);
     expect(resumed?.notes).toHaveLength(1);
-    expect(resumed?.recentSimulations).toHaveLength(1);
-    expect(resumed?.recentSimulations[0].id).toBe(home.recentSimulations[0].id);
+    expect(resumed?.recentSimulations).toHaveLength(2);
+    expect(resumed?.recentSimulations[0].id).toBe(v2.id);
+    expect(resumed?.futuresBySimulation[sim.id]?.[0].name).toBeTruthy();
+    expect(resumed?.futuresBySimulation[v2.id]?.length).toBe(5);
   });
 
-  it("rejects empty names and requires a workspace before mutations", () => {
-    expect(() => service.createWorkspace(ownerId, "   ")).toThrow(/name/i);
-    expect(() => service.setGoal(ownerId, "A goal")).toThrow(/workspace/i);
+  it("rejects empty names and requires a workspace before mutations", async () => {
+    await expect(service.createWorkspace(ownerId, "   ")).rejects.toThrow(/name/i);
+    await expect(service.setGoal(ownerId, "A goal")).rejects.toThrow(/workspace/i);
 
-    service.createWorkspace(ownerId, "Lab");
-    expect(() => service.setGoal(ownerId, "  ")).toThrow(/goal/i);
-    expect(() => service.runSimulation(ownerId, "")).toThrow(/objective/i);
+    await service.createWorkspace(ownerId, "Lab");
+    await expect(service.setGoal(ownerId, "  ")).rejects.toThrow(/goal/i);
+    await expect(service.runSimulation(ownerId, "")).rejects.toThrow(/objective/i);
   });
 });

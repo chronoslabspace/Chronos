@@ -34,23 +34,29 @@ const ChangelogPage = lazy(async () => ({
 const WorkspaceShell = lazy(async () => ({
   default: (await import("./features/workspace/WorkspaceShell")).WorkspaceShell,
 }));
-const WorkspaceDashboard = lazy(async () => ({
-  default: (await import("./features/workspace/WorkspaceDashboard")).WorkspaceDashboard,
+const DashboardPage = lazy(async () => ({
+  default: (await import("./features/dashboard/DashboardPage")).DashboardPage,
 }));
-const WorkspaceKnowledgePage = lazy(async () => ({
-  default: (await import("./features/workspace/WorkspaceSubpages")).WorkspaceKnowledgePage,
+const KnowledgePage = lazy(async () => ({
+  default: (await import("./features/knowledge/KnowledgePages")).KnowledgePage,
 }));
-const WorkspaceSimulationsPage = lazy(async () => ({
-  default: (await import("./features/workspace/WorkspaceSubpages")).WorkspaceSimulationsPage,
+const NotesPage = lazy(async () => ({
+  default: (await import("./features/knowledge/KnowledgePages")).NotesPage,
 }));
-const WorkspaceSimulationDetailPage = lazy(async () => ({
-  default: (await import("./features/workspace/WorkspaceSubpages")).WorkspaceSimulationDetailPage,
+const SimulationsPage = lazy(async () => ({
+  default: (await import("./features/simulation/SimulationPages")).SimulationsPage,
 }));
-const WorkspaceNotesPage = lazy(async () => ({
-  default: (await import("./features/workspace/WorkspaceSubpages")).WorkspaceNotesPage,
+const SimulationDetailPage = lazy(async () => ({
+  default: (await import("./features/simulation/SimulationPages")).SimulationDetailPage,
 }));
 const WorkspaceSettingsPage = lazy(async () => ({
-  default: (await import("./features/workspace/WorkspaceSubpages")).WorkspaceSettingsPage,
+  default: (await import("./features/workspace/WorkspaceSettingsPage")).WorkspaceSettingsPage,
+}));
+const MemoryPage = lazy(async () => ({
+  default: (await import("./features/memory/MemoryPages")).MemoryPage,
+}));
+const ComparePage = lazy(async () => ({
+  default: (await import("./features/memory/MemoryPages")).ComparePage,
 }));
 
 function RouteFallback() {
@@ -108,11 +114,13 @@ function App() {
             </ProtectedRoute>
           )}
         >
-          <Route index element={lazyRoute(<WorkspaceDashboard />)} />
-          <Route path="knowledge" element={lazyRoute(<WorkspaceKnowledgePage />)} />
-          <Route path="simulations" element={lazyRoute(<WorkspaceSimulationsPage />)} />
-          <Route path="simulations/:simulationId" element={lazyRoute(<WorkspaceSimulationDetailPage />)} />
-          <Route path="notes" element={lazyRoute(<WorkspaceNotesPage />)} />
+          <Route index element={lazyRoute(<DashboardPage />)} />
+          <Route path="knowledge" element={lazyRoute(<KnowledgePage />)} />
+          <Route path="simulations" element={lazyRoute(<SimulationsPage />)} />
+          <Route path="simulations/:simulationId" element={lazyRoute(<SimulationDetailPage />)} />
+          <Route path="notes" element={lazyRoute(<NotesPage />)} />
+          <Route path="memory" element={lazyRoute(<MemoryPage />)} />
+          <Route path="memory/compare" element={lazyRoute(<ComparePage />)} />
           <Route path="settings" element={lazyRoute(<WorkspaceSettingsPage />)} />
         </Route>
 

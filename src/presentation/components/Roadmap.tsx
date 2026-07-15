@@ -20,36 +20,37 @@ const phases = [
   },
   {
     num: "Phase 02",
-    name: "Workspace OS",
-    status: "Current",
-    statusColor: "#CDCAB2",
+    name: "Workspace MVP",
+    status: "Shipped",
+    statusColor: "#60899B",
     date: "July 2026",
-    intent: "Turn objectives into task graphs and make every run improve the next one.",
-    outcome: "Private workspace preview",
+    intent:
+      "Validate Chronos’ unique value—better decisions through simulated futures—with a usable private workspace, one gate at a time.",
+    outcome: "Sign-in → context → simulate → cards → memory",
     items: [
-      "Planner and task graph",
-      "Capability registry",
-      "Timeline ranking and merge records",
-      "Workspace intelligence loop",
-      "Knowledge graph + failure patterns",
-      "Qualified Cohort 04 workspace access",
+      "Workspace dashboard (HQ navigation after sign-in)",
+      "Product schema: workspaces, goals, simulations, futures, knowledge, notes, timeline_nodes",
+      "Knowledge library (RAG-lite): PDF/MD/TXT, URL & GitHub import, notes, keyword search",
+      "Simulation engine: plan → generate → evaluate → rank → best future",
+      "Timeline cards (not a graph yet): Future A ⭐ … D with summary, risk, confidence, next steps",
+      "Persistent memory: versioned history, re-run, compare — work accumulates across sessions",
     ],
   },
   {
     num: "Phase 03",
     name: "Simulation Cloud",
     status: "Next",
-    statusColor: "#E2DDDA",
+    statusColor: "#CDCAB2",
     date: "August–September 2026",
-    intent: "Move temporal workloads from a private runtime to elastic production infrastructure.",
+    intent: "Move temporal workloads from browser-local persistence to elastic production infrastructure.",
     outcome: "Managed simulation capacity",
     items: [
+      "Cloud sync for workspace memory (beyond local store)",
       "Elastic simulation workers",
       "Shared result cache by workspace + model",
       "Workspace-level audit trails",
       "Replay archive and branch retention policies",
-      "SDK, API, CLI parity",
-      "Workspace roles and access controls",
+      "SDK, API, CLI parity · roles and access controls",
     ],
   },
   {
@@ -61,12 +62,12 @@ const phases = [
     intent: "Make temporal computation native to the agent development workflow.",
     outcome: "Authoring and deployment ecosystem",
     items: [
+      "Timeline tree, branches, merge, collapse, compare (beyond cards)",
       "Visual Studio extension",
       "Capability marketplace",
       "Cross-workspace evaluation benchmarks",
       "Model and policy version registry",
-      "Simulation Cloud regions",
-      "Enterprise deployment options",
+      "Simulation Cloud regions · enterprise deploy",
     ],
   },
 ];
@@ -78,7 +79,7 @@ export function Roadmap() {
         <div className="mb-8 rounded-xl border border-line bg-bg-soft/60 p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint">
             <span>Project timeline · 2026</span>
-            <span className="flex items-center gap-2 text-chronos"><span className="h-1.5 w-1.5 rounded-full bg-chronos blink" /> Current point: July 2026</span>
+            <span className="flex items-center gap-2 text-chronos"><span className="h-1.5 w-1.5 rounded-full bg-chronos blink" /> Current point: Workspace MVP shipped · Cloud next</span>
             <Link to="/changelog" className="transition hover:text-ink">View changelog →</Link>
           </div>
           <div className="mt-4 grid grid-cols-4 gap-1.5">
