@@ -285,23 +285,24 @@ class Parser {
 
   parseState(): { key: string; value: Expression } {
     this.expect("keyword", "state");
-    // Optional identifier for namespaced state (e.g., `state agent { ... }`)
-    let key = "root";
+    // Optional identifier for namespaced state (e.g., `state agent { velocity = 68 }`)
+    let namespace: string | null = null;
     if (this.match("ident")) {
-      key = this.next().value;
+      namespace = this.next().value;
     }
     this.expect("symbol", "{");
-    const fields: string[] = [];
+    const fields: { key: string; value: Expression }[] = [];
     while (!this.match("symbol", "}")) {
-      const ident = this.expect("ident").value;
+      // Support dotted assignments: `agent.velocity = 68`
+      const path = this.parsePath();
       this.expect("symbol", "=");
       const value = this.parseExpression();
-      fields.push({ key: `${key}.${ident}`, value } as any);
+      const fieldKey = namespace ? `${namespace}.${path.join(".")}` : path.join(".");
+      fields.push({ key: fieldKey, value });
       if (this.match("symbol", ",")) this.next();
     }
     this.expect("symbol", "}");
-    // Store as nested object reference
-    return { key, value: { kind: "object", fields } as any };
+    return { key: namespace ?? "root", value: { kind: "object", fields } };
   }
 
   parseAction(): { name: string; body: ActionBody } {

@@ -1,9 +1,10 @@
-import { lazy, Suspense } from "react";
-import { HashRouter, Routes, Route } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { HomePage } from "./components/HomePage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { LoginPage } from "./pages/LoginPage";
+import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 
 // Route-level code splitting: the marketing shell ships first; large product,
 // documentation, and legal page compositions load only after navigation.
@@ -48,11 +49,34 @@ function lazyRoute(element: React.ReactNode) {
   return <Suspense fallback={<RouteFallback />}>{element}</Suspense>;
 }
 
+/**
+ * Migrates legacy HashRouter URLs (`/#/dashboard`) to path URLs (`/dashboard`).
+ * Leaves auth fragments (`#access_token=...`) alone for Supabase to consume.
+ */
+function LegacyHashRedirect() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const { hash } = window.location;
+    if (!hash.startsWith("#/")) return;
+    // Do not rewrite auth token fragments that happen to include a slash.
+    if (hash.includes("access_token=") || hash.includes("refresh_token=")) return;
+
+    const path = hash.slice(1) || "/";
+    window.history.replaceState(null, "", `${path}${window.location.search}`);
+    navigate(path, { replace: true });
+  }, [navigate]);
+
+  return null;
+}
+
 function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
+      <LegacyHashRedirect />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="/core" element={lazyRoute(<CorePage />)} />
@@ -78,7 +102,7 @@ function App() {
           <Route path="/access" element={lazyRoute(<AccessPage />)} />
         </Route>
       </Routes>
-    </HashRouter>
+    </BrowserRouter>
   );
 }
 

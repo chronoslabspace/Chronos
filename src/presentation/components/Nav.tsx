@@ -74,6 +74,13 @@ export function Nav() {
             )}
           </button>
 
+          <Link
+            to="/login"
+            className="hidden text-[13px] font-medium text-ink-dim transition hover:text-ink sm:inline"
+          >
+            Sign in
+          </Link>
+
           <button
             type="button"
             onClick={openAccessModal}
@@ -116,6 +123,13 @@ export function Nav() {
                 </Link>
               );
             })}
+            <Link
+              to="/login"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-md px-3 py-2.5 text-[14px] font-medium text-ink-dim transition hover:bg-bg hover:text-ink"
+            >
+              Sign in
+            </Link>
           </nav>
         </div>
       )}

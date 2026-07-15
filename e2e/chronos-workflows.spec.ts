@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.describe("Chronos user workflows", () => {
   test("the landing page turns an objective into a visible task plan and ranked path", async ({ page }) => {
-    await page.goto("/#/");
+    await page.goto("/");
 
     await expect(page.getByRole("heading", { name: /make agents think/i })).toBeVisible();
 
@@ -15,16 +15,23 @@ test.describe("Chronos user workflows", () => {
     await expect(page.locator("text=Best path").filter({ hasNot: page.locator("text=This is not a chatbot response") }).first()).toBeVisible({ timeout: 6_000 });
   });
 
-  test("an unauthenticated dashboard visitor is redirected to home", async ({ page }) => {
+  test("an unauthenticated dashboard visitor is redirected to login", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Private dashboard requires a session; send visitors to magic-link sign-in
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
+  });
+
+  test("legacy hash dashboard URL redirects unauthenticated users to login", async ({ page }) => {
     await page.goto("/#/dashboard");
 
-    // Should redirect to home since not authenticated
-    await expect(page).toHaveURL("/#/");
-    await expect(page.getByRole("heading", { name: /make agents think/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
   });
 
   test("a visitor simulates a startup idea through to a best path", async ({ page }) => {
-    await page.goto("/#/simulate");
+    await page.goto("/simulate");
 
     await page.getByLabel("Your idea").fill("I want to build an AI meeting assistant");
     await page.getByRole("button", { name: /simulate 1,000 futures/i }).click();
@@ -37,7 +44,7 @@ test.describe("Chronos user workflows", () => {
 
   test("the mobile menu opens on a non-home page", async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 740 });
-    await page.goto("/#/core");
+    await page.goto("/core");
 
     await page.getByRole("button", { name: "Toggle menu" }).click();
     const mobileMenu = page.locator("header div.border-t");

@@ -88,6 +88,7 @@ export class TaskGraph {
   readyTasks(completedTaskIds: ReadonlySet<string>): Task[] {
     return this.tasks
       .filter((task) => task.status === "queued")
+      .filter((task) => !completedTaskIds.has(task.id))
       .filter((task) => task.dependencies.every((dependency) => completedTaskIds.has(dependency)))
       .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
   }
