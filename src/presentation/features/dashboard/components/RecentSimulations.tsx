@@ -1,21 +1,24 @@
 import { Link } from "react-router-dom";
-import {
-  confidencePercent,
-  formatCreatedAt,
-} from "../../../../domain/workspace/seed";
+import { confidencePercent, formatCreatedAt } from "../../../../domain/workspace/seed";
 import type { SimulationRecord } from "../../../../domain/workspace/types";
 
 type Props = {
   simulations: readonly SimulationRecord[];
+  /** Skip the first (already shown as Latest). */
+  skipLatest?: boolean;
 };
 
-/** Table-like feed: name, status, confidence, created at. */
-export function RecentSimulations({ simulations }: Props) {
+/** Compact history under the latest spotlight. */
+export function RecentSimulations({ simulations, skipLatest = true }: Props) {
+  const list = skipLatest ? simulations.slice(1, 5) : simulations.slice(0, 4);
+
+  if (simulations.length === 0) return null;
+
   return (
     <section>
       <div className="flex items-baseline justify-between gap-3">
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint">
-          Recent simulations
+          Recent runs
         </div>
         <Link
           to="/workspace/simulations"
@@ -25,42 +28,26 @@ export function RecentSimulations({ simulations }: Props) {
         </Link>
       </div>
 
-      <div className="mt-4 overflow-x-auto border-y border-line">
-        <table className="w-full min-w-[520px] text-left text-sm">
-          <thead>
-            <tr className="border-b border-line font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
-              <th className="py-3 pr-3 font-medium">Simulation</th>
-              <th className="py-3 pr-3 font-medium">Status</th>
-              <th className="py-3 pr-3 font-medium">Confidence</th>
-              <th className="py-3 font-medium">Created</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line">
-            {simulations.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="py-6 text-ink-dim">
-                  No simulations yet. Run one from Quick actions.
-                </td>
-              </tr>
-            ) : (
-              simulations.map((sim) => (
-                <tr key={sim.id} className="hover:bg-chronos/5">
-                  <td className="py-3 pr-3">
-                    <Link to={`/workspace/simulations/${sim.id}`} className="text-ink hover:text-chronos">
-                      {sim.title || "Untitled"}
-                    </Link>
-                  </td>
-                  <td className="py-3 pr-3 capitalize text-ink-dim">{sim.status}</td>
-                  <td className="py-3 pr-3 font-mono text-chronos">
-                    {confidencePercent(sim.confidence)}
-                  </td>
-                  <td className="py-3 text-ink-dim">{formatCreatedAt(sim.created_at)}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      {list.length === 0 ? (
+        <p className="mt-3 text-sm text-ink-dim">Only one run so far — re-run to build memory.</p>
+      ) : (
+        <ul className="mt-3 divide-y divide-line border-y border-line">
+          {list.map((sim) => (
+            <li key={sim.id}>
+              <Link
+                to={`/workspace/simulations/${sim.id}`}
+                className="flex flex-wrap items-baseline justify-between gap-2 py-3 transition hover:bg-chronos/5"
+              >
+                <span className="min-w-0 truncate text-sm text-ink">{sim.title}</span>
+                <span className="flex shrink-0 items-center gap-3 font-mono text-[11px]">
+                  <span className="text-chronos">{confidencePercent(sim.confidence)}</span>
+                  <span className="text-ink-faint">{formatCreatedAt(sim.created_at)}</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

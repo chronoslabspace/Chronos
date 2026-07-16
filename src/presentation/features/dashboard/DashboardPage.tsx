@@ -1,35 +1,42 @@
 import { useWorkspace } from "../workspace/WorkspaceContext";
-import { DashboardHeader } from "./components/DashboardHeader";
+import { GoalCard } from "./components/GoalCard";
 import { KnowledgeSummary } from "./components/KnowledgeSummary";
+import { LatestSimulationCard } from "./components/LatestSimulationCard";
 import { MvpProgress } from "./components/MvpProgress";
-import { QuickActions } from "./components/QuickActions";
 import { RecentSimulations } from "./components/RecentSimulations";
 import { TimelinePreview } from "./components/TimelinePreview";
+import { WorkspacePulse } from "./components/WorkspacePulse";
 
 /**
- * Workspace HQ — progressive MVP path.
- * Each phase stays usable: navigate → persist → context → simulate → see futures → accumulate.
+ * Workspace HQ — tracks the decision you're working on.
+ *
+ * Pulse → Goal → Latest sim → Knowledge · Timeline → history
  */
 export function DashboardPage() {
-  const { home, ownerId } = useWorkspace();
+  const { home } = useWorkspace();
   if (!home?.goal) return null;
 
   const latest = home.recentSimulations[0] ?? null;
+  const futures = latest ? (home.futuresBySimulation[latest.id] ?? []) : [];
+  const goalConfidence = latest?.status === "completed" ? latest.confidence : null;
 
   return (
-    <div className="space-y-10">
-      <DashboardHeader
-        workspace={home.workspace}
-        goal={home.goal}
-        userLabel={ownerId ? ownerId.slice(0, 8) : "You"}
-      />
-      <MvpProgress home={home} />
-      <QuickActions />
-      <RecentSimulations simulations={home.recentSimulations} />
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+    <div className="mx-auto max-w-3xl space-y-5 lg:max-w-none">
+      {/* Live state first — not a greeting */}
+      <WorkspacePulse home={home} />
+
+      <GoalCard goal={home.goal} confidence={goalConfidence} />
+
+      <LatestSimulationCard simulation={latest} />
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <KnowledgeSummary knowledge={home.knowledge} notes={home.notes} />
-        <TimelinePreview latest={latest} />
+        <TimelinePreview latest={latest} futures={futures} />
       </div>
+
+      <RecentSimulations simulations={home.recentSimulations} />
+
+      <MvpProgress home={home} />
     </div>
   );
 }

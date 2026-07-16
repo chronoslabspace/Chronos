@@ -10,30 +10,43 @@ import type { FutureRecord } from "../../../domain/workspace/types";
 type Props = {
   goalTitle: string;
   futures: readonly FutureRecord[];
-  /** Optional risks from the simulation for the best path */
   simulationRisks?: readonly string[];
+  /** Currently committed choice (if any). */
+  chosenFutureId?: string | null;
+  onChoosePath?: (futureId: string) => Promise<void> | void;
 };
 
 /**
- * Phase 5 — card timeline (not a graph).
- * Goal → Future A ⭐ / B / C / D · click for summary, risk, confidence, next steps.
+ * Phase 5 — card timeline + choose/save path.
+ * Goal → Future A ⭐ / B / C / D · click → Choose this path → Save
  */
 export function FutureTimelineCards({
   goalTitle,
   futures,
   simulationRisks = [],
+  chosenFutureId = null,
+  onChoosePath,
 }: Props) {
-  const [selectedId, setSelectedId] = useState<string | null>(futures[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    chosenFutureId ?? futures[0]?.id ?? null
+  );
+  const [saving, setSaving] = useState(false);
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    if (chosenFutureId && futures.some((f) => f.id === chosenFutureId)) {
+      setSelectedId(chosenFutureId);
+      return;
+    }
     if (!futures.some((f) => f.id === selectedId)) {
       setSelectedId(futures[0]?.id ?? null);
     }
-  }, [futures, selectedId]);
+  }, [futures, selectedId, chosenFutureId]);
 
   const selected = futures.find((f) => f.id === selectedId) ?? null;
   const selectedIndex = selected ? futures.findIndex((f) => f.id === selected.id) : -1;
-  const isBest = selectedIndex === 0;
+  const engineBest = selectedIndex === 0;
+  const isChosen = Boolean(selected && chosenFutureId === selected.id);
 
   if (futures.length === 0) {
     return (
@@ -46,16 +59,29 @@ export function FutureTimelineCards({
     );
   }
 
+  const handleChoose = async () => {
+    if (!selected || !onChoosePath) return;
+    setSaving(true);
+    setSavedMsg(null);
+    try {
+      await onChoosePath(selected.id);
+      setSavedMsg(`Saved: ${selected.name}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <section className="space-y-6">
       <div>
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint">
-          Timeline
+          Compare futures
         </div>
-        <p className="mt-1 text-sm text-ink-dim">Cards first. Tree and branches come later.</p>
+        <p className="mt-1 text-sm text-ink-dim">
+          Click a card, then choose the best path and save.
+        </p>
       </div>
 
-      {/* Goal */}
       <div className="rounded-2xl border border-line bg-bg-soft/30 px-4 py-4">
         <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-faint">Goal</div>
         <div className="mt-1 font-serif text-2xl text-ink">{goalTitle}</div>
@@ -65,17 +91,20 @@ export function FutureTimelineCards({
         ↓
       </div>
 
-      {/* Future cards */}
       <div className="space-y-3">
         {futures.map((future, index) => {
-          const best = index === 0;
+          const rankedBest = index === 0;
           const active = future.id === selectedId;
+          const chosen = future.id === chosenFutureId;
           const label = futureCardLabel(index);
           return (
             <button
               key={future.id}
               type="button"
-              onClick={() => setSelectedId(future.id)}
+              onClick={() => {
+                setSelectedId(future.id);
+                setSavedMsg(null);
+              }}
               className={`w-full rounded-2xl border px-4 py-4 text-left transition ${
                 active
                   ? "border-chronos/50 bg-chronos/10"
@@ -86,7 +115,8 @@ export function FutureTimelineCards({
                 <div className="min-w-0">
                   <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-faint">
                     Future {label}
-                    {best ? " ⭐" : ""}
+                    {rankedBest ? " ⭐" : ""}
+                    {chosen ? " · chosen" : ""}
                   </div>
                   <div className="mt-1 truncate text-[16px] text-ink">{future.name}</div>
                   <p className="mt-1 line-clamp-2 text-sm text-ink-dim">{future.summary}</p>
@@ -100,13 +130,13 @@ export function FutureTimelineCards({
         })}
       </div>
 
-      {/* Selected detail */}
       {selected && (
         <div className="rounded-2xl border border-line p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-chronos">
               Future {futureCardLabel(selectedIndex)}
-              {isBest ? " ⭐" : ""}
+              {engineBest ? " ⭐ engine" : ""}
+              {isChosen ? " · your choice" : ""}
             </div>
             <div className="font-serif text-xl text-ink">{selected.name}</div>
           </div>
@@ -123,7 +153,7 @@ export function FutureTimelineCards({
                   {(selected.risk * 100).toFixed(0)}%
                 </span>
               </div>
-              {isBest && simulationRisks.length > 0 && (
+              {engineBest && simulationRisks.length > 0 && (
                 <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-ink-dim">
                   {simulationRisks.slice(0, 4).map((r) => (
                     <li key={r}>{r}</li>
@@ -143,16 +173,33 @@ export function FutureTimelineCards({
 
             <DetailBlock label="Next steps">
               <ol className="list-decimal space-y-2 pl-5 text-sm text-ink-dim">
-                {deriveNextSteps(selected, isBest).map((step) => (
+                {deriveNextSteps(selected, engineBest).map((step) => (
                   <li key={step}>{step}</li>
                 ))}
               </ol>
             </DetailBlock>
           </dl>
+
+          {onChoosePath && (
+            <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-5">
+              <button
+                type="button"
+                disabled={saving || isChosen}
+                onClick={() => void handleChoose()}
+                className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-bg transition hover:bg-chronos disabled:opacity-50"
+              >
+                {isChosen
+                  ? "Path saved"
+                  : saving
+                    ? "Saving…"
+                    : "Choose this path · Save"}
+              </button>
+              {savedMsg && <span className="text-sm text-chronos">{savedMsg}</span>}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Later roadmap — visible, not built */}
       <div className="border-t border-line pt-5">
         <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-faint">
           Later

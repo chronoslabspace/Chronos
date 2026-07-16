@@ -44,6 +44,11 @@ export type SimulationResultPayload = {
   risks?: string[];
   tasks?: SimulationTaskRecord[];
   constraints?: string[];
+  /** User-chosen path (may differ from engine-ranked best_future). */
+  chosen_future_id?: string;
+  chosen_future_name?: string;
+  chosen_at?: string;
+  chosen_summary?: string;
   [key: string]: unknown;
 };
 

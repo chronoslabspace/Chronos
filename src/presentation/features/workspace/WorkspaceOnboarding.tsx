@@ -75,7 +75,7 @@ export function WorkspaceOnboarding() {
         </div>
         <h1 className="mt-3 font-serif text-3xl text-ink">Define the current goal</h1>
         <p className="mt-3 text-sm text-ink-dim">
-          One primary goal. Simulations and knowledge revolve around it.
+          What decision are you working on? Simulations and knowledge revolve around it.
         </p>
         <form onSubmit={submitGoal} className="mt-8 space-y-4">
           <Field

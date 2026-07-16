@@ -32,6 +32,7 @@ type WorkspaceContextValue = {
   addNote: (title: string, content: string) => Promise<void>;
   runSimulation: (objective: string, constraints?: string[]) => Promise<void>;
   rerunSimulation: (parentSimulationId: string, constraints?: string[]) => Promise<string | null>;
+  chooseBestPath: (simulationId: string, futureId: string) => Promise<void>;
   refresh: () => Promise<void>;
 };
 
@@ -139,6 +140,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           workspaceService.rerunSimulation(id, parentSimulationId, constraints)
         );
         return next.recentSimulations[0]?.id ?? null;
+      },
+      chooseBestPath: async (simulationId, futureId) => {
+        await withOwner((id) => workspaceService.chooseBestPath(id, simulationId, futureId));
       },
     }),
     [ownerId, home, workspaces, loading, error, refresh, withOwner]

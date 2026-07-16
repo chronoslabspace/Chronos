@@ -23,7 +23,7 @@ export function KnowledgePage() {
   const [params, setParams] = useSearchParams();
   const panel = params.get("upload") === "1" ? "upload" : params.get("import") ? "import" : null;
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => params.get("q") ?? "");
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [selected, setSelected] = useState<KnowledgeSearchHit | null>(null);

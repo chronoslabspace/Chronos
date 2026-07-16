@@ -3,36 +3,45 @@ import { evaluateMvpGates, nextMvpGate } from "../../../../domain/workspace/mvpG
 import type { WorkspaceHome } from "../../../../domain/workspace/types";
 
 /**
- * Surface the recommended build order as progressive, usable value —
- * not a full OS, just the path that validates Chronos' differentiator.
+ * Slim progress rail — progressive usable value, not a full OS checklist.
  */
 export function MvpProgress({ home }: { home: WorkspaceHome }) {
   const gates = evaluateMvpGates(home);
   const next = nextMvpGate(home);
   const doneCount = gates.filter((g) => g.done).length;
 
+  if (!next && doneCount === gates.length) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-chronos/25 bg-chronos/5 px-4 py-3">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-chronos">
+          Core loop validated
+        </span>
+        <span className="text-xs text-ink-dim">
+          {doneCount}/{gates.length} gates · keep accumulating decisions
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <section className="border border-line p-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint">
-          MVP path · {doneCount}/{gates.length}
+    <section className="rounded-xl border border-line px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-faint">
+          Path · {doneCount}/{gates.length}
         </div>
         {next ? (
           <Link to={next.href} className="text-sm text-chronos hover:text-ink">
             Next: {next.cta} →
           </Link>
-        ) : (
-          <span className="text-sm text-chronos">Core loop validated</span>
-        )}
+        ) : null}
       </div>
-
-      <ol className="mt-4 flex flex-wrap gap-2">
+      <ol className="mt-3 flex flex-wrap gap-1.5">
         {gates.map((gate) => (
           <li key={gate.id}>
             <Link
               to={gate.href}
               title={gate.usableWhen}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] transition ${
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.12em] transition ${
                 gate.done
                   ? "bg-chronos/15 text-chronos"
                   : next?.id === gate.id
@@ -46,13 +55,6 @@ export function MvpProgress({ home }: { home: WorkspaceHome }) {
           </li>
         ))}
       </ol>
-
-      {next && (
-        <p className="mt-3 text-sm text-ink-dim">
-          <span className="text-ink">Phase {next.phase} — {next.label}:</span>{" "}
-          {next.usableWhen}
-        </p>
-      )}
     </section>
   );
 }

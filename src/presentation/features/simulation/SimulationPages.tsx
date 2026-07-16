@@ -167,7 +167,7 @@ export function SimulationsPage() {
 }
 
 export function SimulationDetailPage() {
-  const { home, rerunSimulation } = useWorkspace();
+  const { home, rerunSimulation, chooseBestPath } = useWorkspace();
   const { simulationId } = useParams();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -380,11 +380,25 @@ export function SimulationDetailPage() {
         </div>
       </section>
 
-      {/* Phase 5 — card timeline */}
+      {/* Compare futures → choose best path → save */}
+      {typeof sim.result.chosen_future_name === "string" && (
+        <div className="rounded-xl border border-chronos/30 bg-chronos/5 px-4 py-3 text-sm text-ink">
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-chronos">
+            Saved path
+          </span>
+          <div className="mt-1">{String(sim.result.chosen_future_name)}</div>
+        </div>
+      )}
       <FutureTimelineCards
         goalTitle={home.goal?.title ?? sim.title}
         futures={futures}
         simulationRisks={risks}
+        chosenFutureId={
+          typeof sim.result.chosen_future_id === "string" ? sim.result.chosen_future_id : null
+        }
+        onChoosePath={async (futureId) => {
+          await chooseBestPath(sim.id, futureId);
+        }}
       />
 
       <Back to="/workspace/simulations" label="All simulations" />

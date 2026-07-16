@@ -62,11 +62,19 @@ export function GrokAdvisorPage() {
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint">
           Grok · xAI
         </div>
-        <h1 className="mt-2 font-serif text-3xl text-ink">Workspace advisor</h1>
+        <h1 className="mt-2 font-serif text-3xl text-ink">Stress-test the decision</h1>
         <p className="mt-2 max-w-xl text-sm text-ink-dim">
-          Grok reads your goal, knowledge library, and simulation history (via a secure Edge
-          Function). Keys never ship to the browser.
+          Not a blank chat. Grok is grounded in the decision you are working on — goal,
+          knowledge, and ranked futures. Keys never ship to the browser.
         </p>
+        {home.goal ? (
+          <p className="mt-3 rounded-xl border border-line bg-bg-soft/30 px-4 py-3 text-sm text-ink">
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
+              Decision in focus
+            </span>
+            <span className="mt-1 block font-serif text-lg">{home.goal.title}</span>
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-4 rounded-xl border border-line bg-bg-soft/40 p-3">
@@ -105,8 +113,8 @@ export function GrokAdvisorPage() {
       <div className="mt-6 flex-1 space-y-4 overflow-y-auto border-y border-line py-4">
         {messages.length === 0 ? (
           <p className="text-sm text-ink-dim">
-            Ask about tradeoffs, risks, or what simulation to run next. Grok only uses the
-            context above.
+            What decision are you working on? Probe tradeoffs, risks, and which future to
+            commit — Grok only uses the workspace context above.
           </p>
         ) : (
           messages.map((m, i) => (
@@ -150,7 +158,7 @@ export function GrokAdvisorPage() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask Grok about this workspace…"
+          placeholder="What decision are you working on?"
           disabled={busy}
           className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2.5 text-sm text-ink focus:border-chronos focus:outline-none disabled:opacity-50"
         />
