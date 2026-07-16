@@ -350,6 +350,64 @@ export class WorkspaceService {
     return this.runSimulation(ownerId, parent.title, lines, { parentSimulationId });
   }
 
+  /**
+   * Product loop close: user chooses a future path and saves the decision.
+   * Persists chosen_future_* on the simulation and logs a decision note.
+   */
+  async chooseBestPath(
+    ownerId: string,
+    simulationId: string,
+    futureId: string
+  ): Promise<WorkspaceHome> {
+    const home = await this.require(ownerId);
+    const sim = home.recentSimulations.find((s) => s.id === simulationId);
+    if (!sim) throw new Error("Simulation not found.");
+    const futures = home.futuresBySimulation[simulationId] ?? [];
+    const future = futures.find((f) => f.id === futureId);
+    if (!future) throw new Error("Future not found on this simulation.");
+
+    const chosenAt = nowIso();
+    const updatedSim: SimulationRecord = {
+      ...sim,
+      result: {
+        ...sim.result,
+        chosen_future_id: future.id,
+        chosen_future_name: future.name,
+        chosen_summary: future.summary,
+        chosen_at: chosenAt,
+        // Keep engine ranking; user choice is explicit
+        best_future: future.name,
+      },
+    };
+
+    const decisionNote: NoteRecord = {
+      id: uuid(),
+      workspace_id: home.workspace.id,
+      title: `Decision: ${future.name}`,
+      content: [
+        `# Chosen path`,
+        ``,
+        `**Simulation:** ${sim.title} (v${sim.version})`,
+        `**Path:** ${future.name}`,
+        `**Confidence:** ${(future.confidence * 100).toFixed(0)}%`,
+        `**Risk:** ${(future.risk * 100).toFixed(0)}%`,
+        ``,
+        future.summary,
+        ``,
+        `Saved ${chosenAt}`,
+      ].join("\n"),
+      created_at: chosenAt,
+    };
+
+    return this.persist(ownerId, {
+      ...home,
+      recentSimulations: home.recentSimulations.map((s) =>
+        s.id === simulationId ? updatedSim : s
+      ),
+      notes: [decisionNote, ...home.notes],
+    });
+  }
+
   private parseConstraints(lines: string[]): SimulationConstraint[] {
     return lines
       .map((line) => line.trim())
