@@ -29,9 +29,20 @@ type WorkspaceContextValue = {
     content?: string;
     metadata?: Record<string, unknown>;
   }) => Promise<void>;
+  updateKnowledge: (
+    knowledgeId: string,
+    patch: {
+      title?: string;
+      content?: string;
+      metadata?: Record<string, unknown>;
+    }
+  ) => Promise<void>;
+  deleteKnowledge: (knowledgeId: string) => Promise<void>;
   addNote: (title: string, content: string) => Promise<void>;
+  deleteNote: (noteId: string) => Promise<void>;
   runSimulation: (objective: string, constraints?: string[]) => Promise<void>;
   rerunSimulation: (parentSimulationId: string, constraints?: string[]) => Promise<string | null>;
+  chooseBestPath: (simulationId: string, futureId: string) => Promise<void>;
   refresh: () => Promise<void>;
 };
 
@@ -44,21 +55,33 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Resolve the signed-in user id.
+   * Prefer local session (same source as ProtectedRoute) so a brief getUser()
+   * network failure does not leave ownerId null while the shell is still open.
+   */
+  const resolveOwnerId = useCallback(async (): Promise<string | null> => {
+    const session = await authService.currentSession();
+    if (session?.user?.id) return session.user.id;
+    const user = await authService.currentUser();
+    return user?.id ?? null;
+  }, []);
+
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const user = await authService.currentUser();
-      if (!user) {
+      const id = await resolveOwnerId();
+      if (!id) {
         setOwnerId(null);
         setHome(null);
         setWorkspaces([]);
         return;
       }
-      setOwnerId(user.id);
+      setOwnerId(id);
       const [loaded, list] = await Promise.all([
-        workspaceService.load(user.id),
-        workspaceService.listWorkspaces(user.id),
+        workspaceService.load(id),
+        workspaceService.listWorkspaces(id),
       ]);
       setHome(loaded);
       setWorkspaces(list);
@@ -67,11 +90,18 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [resolveOwnerId]);
 
   useEffect(() => {
     void refresh();
-    const { data } = authService.onAuthStateChange(() => {
+    const { data } = authService.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        setOwnerId(null);
+        setHome(null);
+        setWorkspaces([]);
+        setLoading(false);
+        return;
+      }
       void refresh();
     });
     return () => data.subscription.unsubscribe();
@@ -79,12 +109,21 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   const withOwner = useCallback(
     async (action: (id: string) => Promise<WorkspaceHome>) => {
-      if (!ownerId) throw new Error("Not signed in.");
+      // Always re-resolve at action time — React state can lag behind the session
+      // after magic-link recovery or a slow first paint.
+      const id = ownerId ?? (await resolveOwnerId());
+      if (!id) {
+        const message = "Not signed in. Sign in again to continue.";
+        setError(message);
+        throw new Error(message);
+      }
+      if (!ownerId) setOwnerId(id);
+
       setError(null);
       try {
-        const next = await action(ownerId);
+        const next = await action(id);
         setHome(next);
-        const list = await workspaceService.listWorkspaces(ownerId);
+        const list = await workspaceService.listWorkspaces(id);
         setWorkspaces(list);
         return next;
       } catch (err) {
@@ -92,7 +131,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         throw err;
       }
     },
-    [ownerId]
+    [ownerId, resolveOwnerId]
   );
 
   const value = useMemo<WorkspaceContextValue>(
@@ -107,13 +146,19 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         await withOwner((id) => workspaceService.createWorkspace(id, name, description ?? ""));
       },
       switchWorkspace: async (workspaceId) => {
-        if (!ownerId) throw new Error("Not signed in.");
+        const id = ownerId ?? (await resolveOwnerId());
+        if (!id) {
+          const message = "Not signed in. Sign in again to continue.";
+          setError(message);
+          throw new Error(message);
+        }
+        if (!ownerId) setOwnerId(id);
         setLoading(true);
         setError(null);
         try {
-          const next = await workspaceService.switchWorkspace(ownerId, workspaceId);
+          const next = await workspaceService.switchWorkspace(id, workspaceId);
           setHome(next);
-          const list = await workspaceService.listWorkspaces(ownerId);
+          const list = await workspaceService.listWorkspaces(id);
           setWorkspaces(list);
         } catch (err) {
           setError((err as Error).message);
@@ -128,8 +173,17 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       addKnowledge: async (input) => {
         await withOwner((id) => workspaceService.addKnowledge(id, input));
       },
+      updateKnowledge: async (knowledgeId, patch) => {
+        await withOwner((id) => workspaceService.updateKnowledge(id, knowledgeId, patch));
+      },
+      deleteKnowledge: async (knowledgeId) => {
+        await withOwner((id) => workspaceService.deleteKnowledge(id, knowledgeId));
+      },
       addNote: async (title, content) => {
         await withOwner((id) => workspaceService.addNote(id, title, content));
+      },
+      deleteNote: async (noteId) => {
+        await withOwner((id) => workspaceService.deleteNote(id, noteId));
       },
       runSimulation: async (objective, constraints = []) => {
         await withOwner((id) => workspaceService.runSimulation(id, objective, constraints));
@@ -140,8 +194,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         );
         return next.recentSimulations[0]?.id ?? null;
       },
+      chooseBestPath: async (simulationId, futureId) => {
+        await withOwner((id) => workspaceService.chooseBestPath(id, simulationId, futureId));
+      },
     }),
-    [ownerId, home, workspaces, loading, error, refresh, withOwner]
+    [ownerId, home, workspaces, loading, error, refresh, withOwner, resolveOwnerId]
   );
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
