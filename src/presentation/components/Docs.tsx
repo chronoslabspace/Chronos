@@ -1,46 +1,57 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "./PageHeader";
-import { SystemArchitecture } from "./SystemArchitecture";
+import { useAccessModal } from "../features/access/AccessModal";
 
 type Section =
+  | "introduction"
   | "getting-started"
-  | "platform"
-  | "task-os"
-  | "concepts"
-  | "api-reference"
-  | "architecture"
-  | "tutorials"
-  | "examples"
-  | "sdk"
-  | "rest";
+  | "workspaces"
+  | "goals"
+  | "knowledge"
+  | "simulations"
+  | "timeline"
+  | "memory"
+  | "decision-reports"
+  | "api"
+  | "roadmap"
+  | "security"
+  | "support";
 
 const NAV: {
   group: string;
-  items: { id: Section; label: string }[];
+  items: { id: Section; label: string; badge?: string }[];
 }[] = [
   {
-    group: "Docs",
+    group: "Introduction",
     items: [
-      { id: "getting-started", label: "Getting Started" },
-      { id: "platform", label: "Platform Surfaces" },
-      { id: "task-os", label: "Task Operating System" },
-      { id: "concepts", label: "Concepts" },
+      { id: "introduction", label: "What is Chronos?" },
     ],
   },
   {
-    group: "API",
+    group: "Getting Started",
     items: [
-      { id: "api-reference", label: "API Reference" },
-      { id: "sdk", label: "SDK" },
-      { id: "rest", label: "REST API" },
+      { id: "getting-started", label: "First simulation" },
     ],
   },
   {
-    group: "Guides",
+    group: "Features",
     items: [
-      { id: "architecture", label: "Architecture" },
-      { id: "tutorials", label: "Tutorials" },
-      { id: "examples", label: "Examples" },
+      { id: "workspaces", label: "Workspaces" },
+      { id: "goals", label: "Goals" },
+      { id: "knowledge", label: "Knowledge Library" },
+      { id: "simulations", label: "Simulations" },
+      { id: "timeline", label: "Timeline" },
+      { id: "memory", label: "Memory" },
+      { id: "decision-reports", label: "Decision Reports" },
+    ],
+  },
+  {
+    group: "Platform",
+    items: [
+      { id: "api", label: "API", badge: "Soon" },
+      { id: "roadmap", label: "Roadmap" },
+      { id: "security", label: "Security & Privacy" },
+      { id: "support", label: "Support" },
     ],
   },
 ];
@@ -53,7 +64,7 @@ export function Docs() {
   );
   const section: Section = isKnownSection
     ? (requestedSection as Section)
-    : "getting-started";
+    : "introduction";
 
   const selectSection = (next: Section) => {
     setSearchParams({ section: next }, { replace: true });
@@ -62,10 +73,14 @@ export function Docs() {
   return (
     <>
       <PageHeader
-        breadcrumb={[]}
+        breadcrumb={[{ label: "Docs" }]}
         eyebrow="/ documentation"
-        title={<>Chronos docs<span className="text-ink-faint">.</span></>}
-        subtitle="Everything you need to build agents that reason across time. From the Chronos language to the SDK to the REST API."
+        title={
+          <>
+            Product manual<span className="text-ink-faint">.</span>
+          </>
+        }
+        subtitle="How Chronos works — from workspaces and knowledge to simulations, timelines, and decision reports."
       />
 
       <section className="relative">
@@ -85,6 +100,7 @@ export function Docs() {
                     }`}
                   >
                     {item.label}
+                    {item.badge ? ` · ${item.badge}` : ""}
                   </button>
                 ))
               )}
@@ -106,13 +122,18 @@ export function Docs() {
                           <li key={item.id}>
                             <button
                               onClick={() => selectSection(item.id)}
-                              className={`block w-full rounded-md px-3 py-1.5 text-left text-[13px] transition ${
+                              className={`flex w-full items-center justify-between rounded-md px-3 py-1.5 text-left text-[13px] transition ${
                                 section === item.id
                                   ? "bg-chronos/10 text-chronos"
                                   : "text-ink-dim hover:bg-bg-soft hover:text-ink"
                               }`}
                             >
-                              {item.label}
+                              <span>{item.label}</span>
+                              {item.badge && (
+                                <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-ink-faint">
+                                  {item.badge}
+                                </span>
+                              )}
                             </button>
                           </li>
                         ))}
@@ -127,18 +148,18 @@ export function Docs() {
                   </div>
                   <ul className="space-y-1.5 text-[12px]">
                     <li>
-                      <Link to="/access" className="text-ink-dim hover:text-ink">
-                        Request access →
+                      <Link to="/faq" className="text-ink-dim hover:text-ink">
+                        FAQ →
                       </Link>
                     </li>
                     <li>
-                      <Link to="/simulate" className="text-ink-dim hover:text-ink">
-                        Try simulator →
+                      <Link to="/login" className="text-ink-dim hover:text-ink">
+                        Sign in →
                       </Link>
                     </li>
                     <li>
                       <Link to="/contact" className="text-ink-dim hover:text-ink">
-                        Get help →
+                        Contact →
                       </Link>
                     </li>
                   </ul>
@@ -148,16 +169,19 @@ export function Docs() {
 
             {/* Content */}
             <main className="min-w-0 lg:col-span-9">
+              {section === "introduction" && <Introduction />}
               {section === "getting-started" && <GettingStarted />}
-              {section === "platform" && <PlatformSurfacesDocs />}
-              {section === "task-os" && <TaskOperatingSystemDocs />}
-              {section === "concepts" && <Concepts />}
-              {section === "api-reference" && <ApiReference />}
-              {section === "sdk" && <SdkDocs />}
-              {section === "rest" && <RestDocs />}
-              {section === "architecture" && <Architecture />}
-              {section === "tutorials" && <Tutorials />}
-              {section === "examples" && <Examples />}
+              {section === "workspaces" && <WorkspacesDocs />}
+              {section === "goals" && <GoalsDocs />}
+              {section === "knowledge" && <KnowledgeDocs />}
+              {section === "simulations" && <SimulationsDocs />}
+              {section === "timeline" && <TimelineDocs />}
+              {section === "memory" && <MemoryDocs />}
+              {section === "decision-reports" && <DecisionReportsDocs />}
+              {section === "api" && <ApiDocs />}
+              {section === "roadmap" && <RoadmapDocs />}
+              {section === "security" && <SecurityDocs />}
+              {section === "support" && <SupportDocs />}
             </main>
           </div>
         </div>
@@ -190,7 +214,7 @@ function DocBody({ children }: { children: React.ReactNode }) {
   return <p className="mt-3 max-w-2xl text-[14px] leading-[1.75] text-ink-dim">{children}</p>;
 }
 
-function Code({ children, lang = "ts" }: { children: string; lang?: string }) {
+function Code({ children, lang = "http" }: { children: string; lang?: string }) {
   return (
     <div className="mt-4 overflow-hidden rounded-lg border border-line bg-bg">
       <div className="flex items-center justify-between border-b border-line px-4 py-1.5">
@@ -253,7 +277,9 @@ function Endpoint({
   return (
     <div className="rounded-lg border border-line bg-bg-soft/60 p-4">
       <div className="flex items-baseline gap-3">
-        <span className={`rounded px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] ${colors}`}>
+        <span
+          className={`rounded px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] ${colors}`}
+        >
           {method}
         </span>
         <code className="font-mono text-[13px] text-ink">{path}</code>
@@ -263,1058 +289,894 @@ function Endpoint({
   );
 }
 
+function FlowSteps({ steps }: { steps: string[] }) {
+  return (
+    <div className="mt-6 overflow-hidden rounded-xl border border-line bg-bg-soft">
+      <ol className="divide-y divide-line">
+        {steps.map((step, i) => (
+          <li key={step} className="flex items-center gap-4 px-5 py-3.5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-chronos/30 bg-chronos/10 font-mono text-[11px] text-chronos">
+              {i + 1}
+            </span>
+            <span className="text-[14px] text-ink">{step}</span>
+            {i < steps.length - 1 && (
+              <span className="ml-auto hidden font-mono text-[10px] text-ink-faint sm:inline">
+                ↓
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function TopicList({ items }: { items: { title: string; body: string }[] }) {
+  return (
+    <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {items.map((item) => (
+        <div key={item.title} className="rounded-xl border border-line bg-bg-soft p-5">
+          <div className="font-serif text-lg text-ink">{item.title}</div>
+          <p className="mt-2 text-[13px] leading-[1.65] text-ink-dim">{item.body}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// Introduction
+// ============================================================
+
+function Introduction() {
+  return (
+    <div>
+      <DocTitle>What is Chronos?</DocTitle>
+      <DocBody>
+        Chronos is a decision intelligence platform that helps people and AI
+        explore multiple possible futures before making important decisions.
+        Instead of a single answer, Chronos generates strategies, compares
+        trade-offs, and recommends the strongest path for your goals and context.
+      </DocBody>
+
+      <DocSub>Vision</DocSub>
+      <DocBody>
+        Important decisions should not be one-shot guesses. Chronos exists so
+        founders, product teams, researchers, and autonomous agents can simulate
+        consequences first — then commit with clearer reasoning, ranked options,
+        and an audit trail of what was considered.
+      </DocBody>
+
+      <DocSub>Core concepts</DocSub>
+      <TopicList
+        items={[
+          {
+            title: "Workspace",
+            body: "Your private space for goals, knowledge, simulations, and decision history.",
+          },
+          {
+            title: "Goal",
+            body: "The outcome you want — with priorities, constraints, and success criteria.",
+          },
+          {
+            title: "Knowledge Library",
+            body: "Documents, notes, and URLs that ground simulations in real context.",
+          },
+          {
+            title: "Simulation",
+            body: "A run that generates multiple futures, scores them, and ranks recommendations.",
+          },
+          {
+            title: "Timeline",
+            body: "A view of ranked futures and how they relate across versions of a decision.",
+          },
+          {
+            title: "Memory",
+            body: "Saved history so past simulations, reports, and outcomes stay reusable.",
+          },
+        ]}
+      />
+
+      <DocSub>Architecture overview</DocSub>
+      <DocBody>
+        Chronos follows a simple decision loop. Every simulation moves through
+        the same stages so results stay comparable over time.
+      </DocBody>
+      <FlowSteps
+        steps={[
+          "Set a goal",
+          "Gather context",
+          "Generate multiple futures",
+          "Evaluate trade-offs",
+          "Rank outcomes",
+          "Recommend the best path",
+        ]}
+      />
+
+      <Callout tone="tip" title="Start here">
+        New to Chronos? Follow{" "}
+        <Link
+          to="/docs?section=getting-started"
+          className="text-chronos underline-offset-2 hover:underline"
+        >
+          Getting Started
+        </Link>{" "}
+        to create a workspace and run your first simulation. For short answers,
+        see the{" "}
+        <Link to="/faq" className="text-chronos underline-offset-2 hover:underline">
+          FAQ
+        </Link>
+        .
+      </Callout>
+    </div>
+  );
+}
+
 // ============================================================
 // Getting Started
 // ============================================================
 
 function GettingStarted() {
+  const { openAccessModal } = useAccessModal();
+
   return (
     <div>
       <DocTitle>Getting started</DocTitle>
       <DocBody>
-        Chronos gives autonomous agents the ability to branch, evaluate, and
-        collapse millions of futures in milliseconds. This guide gets you from
-        zero to your first simulation in under 5 minutes.
+        This is the shortest path from zero to a recommendation. Private beta
+        access is required for the full workspace product.
       </DocBody>
 
-      <DocSub>Installation</DocSub>
-      <DocBody>Pick your language. Install the SDK.</DocBody>
-      <Code lang="bash">{`# TypeScript / Node
-npm install @chronos/sdk
+      <FlowSteps
+        steps={[
+          "Create account",
+          "Create workspace",
+          "Set goal",
+          "Upload knowledge",
+          "Run simulation",
+          "Review recommendation",
+        ]}
+      />
 
-# Python
-pip install chronos
-
-# Rust
-cargo add chronos
-
-# Go
-go get github.com/chronos-labs/sdk-go`}</Code>
-
-      <DocSub>Quick start</DocSub>
+      <DocSub>1. Create account</DocSub>
       <DocBody>
-        A minimal Chronos program declares a world, a set of candidate
-        actions, and a scoring function — then runs the pipeline.
+        Request private beta access, then sign in. Your session stays private to
+        your account — workspaces are not public by default.
       </DocBody>
-      <Code lang="chronos">{`state {
-  agent.mrr = 180
-  agent.runway = 12
-  world.competitor = 40
-  context.board = "watching"
-}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={openAccessModal}
+          className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-bg transition hover:bg-chronos"
+        >
+          Request access
+        </button>
+        <Link
+          to="/login"
+          className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-dim transition hover:border-line-strong hover:text-ink"
+        >
+          Sign in
+        </Link>
+      </div>
 
-action "Raise Series A" {
-  agent.runway = 24
-  context.board = "hands-off"
-  risk = 0.4
-  reward = 0.82
-}
-
-action "Hunker down" {
-  agent.runway = 18
-  agent.mrr = 150
-  risk = 0.25
-  reward = 0.35
-}
-
-score growth(state) {
-  base = state.reward - state.risk
-  if state.context.board == "watching" {
-    base = base - 0.1
-  }
-  return clamp(base, 0, 1)
-}
-
-run {
-  fork
-  evaluate with growth
-  collapse max-utility
-}`}</Code>
-
-      <DocSub>Your first simulation</DocSub>
+      <DocSub>2. Create workspace</DocSub>
       <DocBody>
-        Run the program from the CLI. Chronos forks every action into an
-        isolated branch, scores each branch in parallel, and collapses to
-        the winner.
+        A workspace is the container for everything related to a decision
+        surface: goals, knowledge, simulations, timeline, and memory. Create one
+        for a company, product, research question, or personal project.
       </DocBody>
-      <Code lang="bash">{`$ chronos run ./startup.chronos
-✓ fork     → 2 branches
-✓ evaluate → scored in 1.4ms
-✓ collapse → branch_0x4a wins (score 0.720)
 
-Result: Raise Series A
-Expected ARR: $2.4M · probability 72%`}</Code>
+      <DocSub>3. Set goal</DocSub>
+      <DocBody>
+        Write a clear goal in plain language. Add priorities, constraints, and
+        what “success” looks like. Better goals produce more useful futures.
+      </DocBody>
 
-      <Callout title="Tip">
-        The same program runs identically from the SDK, REST API, CLI, or an
-        approved workspace. Chronos does not change a decision based on how it
-        is invoked.
+      <DocSub>4. Upload knowledge</DocSub>
+      <DocBody>
+        Ground the simulation with PDFs, markdown, notes, or imported URLs.
+        Chronos uses this library as context when generating and ranking futures.
+      </DocBody>
+
+      <DocSub>5. Run simulation</DocSub>
+      <DocBody>
+        Launch a simulation from your workspace. Chronos generates multiple
+        possible strategies, evaluates trade-offs, and ranks outcomes against
+        your goal.
+      </DocBody>
+
+      <DocSub>6. Review recommendation</DocSub>
+      <DocBody>
+        Open the decision report: best path, confidence signals, risks, and
+        alternatives. Compare futures on the timeline, then save or re-run as
+        context changes.
+      </DocBody>
+
+      <Callout tone="info" title="First simulation checklist">
+        Goal defined · at least one knowledge source · constraints listed ·
+        success criteria stated. Then run.
       </Callout>
     </div>
   );
 }
 
 // ============================================================
-// Platform Surfaces
+// Workspaces
 // ============================================================
 
-function PlatformSurfacesDocs() {
-  const surfaces = [
-    ["SDK", "Embed", "Typed clients for TypeScript, Python, Rust, and Go. Use this when Chronos lives inside an existing agent."],
-    ["API", "Connect", "REST, event streams, and gRPC for systems that need a stable language-neutral contract."],
-    ["CLI", "Operate", "Run programs, inspect branches, replay decisions, and use Chronos in CI or local experiments."],
-    ["Visual Studio Extension", "Author", "Chronos syntax awareness, live branch previews, and evaluator output inside Visual Studio Code."],
-    ["Agent Runtime", "Reason", "A deterministic branch workspace for agent tools, policies, memory, and Chronos programs."],
-    ["Simulation Cloud", "Scale", "Elastic simulation capacity, branch archives, observability, replay, and production decision memory."],
-  ] as const;
-
+function WorkspacesDocs() {
   return (
     <div>
-      <DocTitle>Platform surfaces</DocTitle>
+      <DocTitle>Workspaces</DocTitle>
       <DocBody>
-        Chronos is a Temporal Compute Platform, not a single interface. Every
-        surface uses the same run, branch, timeline, and memory contracts — so
-        an experiment started in an editor can be operated from CI and replayed
-        in the cloud.
+        A workspace is where your goals, knowledge, simulations, and decision
+        history live. Treat it as the home base for a decision domain — not a
+        one-off chat thread.
       </DocBody>
 
-      <div className="mt-8 divide-y divide-line border-y border-line">
-        {surfaces.map(([name, verb, detail], index) => (
-          <div key={name} className="grid grid-cols-[34px_1fr] gap-x-4 py-5 sm:grid-cols-[42px_180px_1fr] sm:gap-x-6">
-            <div className="font-mono text-[10px] tracking-[0.2em] text-chronos">
-              {String(index + 1).padStart(2, "0")}
-            </div>
-            <div className="font-serif text-xl text-ink sm:text-2xl">{name}</div>
-            <div className="col-span-2 mt-2 text-[13px] leading-[1.65] text-ink-dim sm:col-span-1 sm:mt-0">
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent-2">{verb}</span>{" "}
-              {detail}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <DocSub>One program, every surface</DocSub>
+      <DocSub>Creating workspaces</DocSub>
       <DocBody>
-        A `.chronos` program has the same meaning whether it is invoked through
-        the SDK, a REST request, the CLI, the extension, or Simulation Cloud.
-        The platform changes how you author and operate a decision — never what
-        the decision means.
+        Create a workspace after sign-in. Give it a clear name that reflects the
+        decision surface (for example, “Series A strategy” or “Product launch
+        Q3”). You can open it anytime from the workspace dashboard.
       </DocBody>
-      <Code lang="bash">{`# Author in Visual Studio Code
-# Run locally with the CLI
-chronos run ./decision.chronos
 
-# Embed in an Agent Runtime through the SDK
-await client.run("./decision.chronos")
+      <DocSub>Managing goals</DocSub>
+      <DocBody>
+        Each workspace holds active goals. Goals drive simulations: when you run
+        a simulation, Chronos uses the current goal plus knowledge and
+        constraints. Update goals as strategy shifts rather than starting from
+        scratch every time.
+      </DocBody>
 
-# Submit the same program to Simulation Cloud
-curl -X POST https://api.chronoslab.space/v1/runs \\
-  -H "Authorization: Bearer $CHRONOS_KEY" \\
-  -F program=@decision.chronos`}</Code>
+      <DocSub>Organization</DocSub>
+      <DocBody>
+        Keep one workspace per major decision domain when possible. That keeps
+        knowledge, simulation history, and memory coherent. Use notes and clear
+        goal titles so future you can find the right context quickly.
+      </DocBody>
 
-      <Callout tone="tip" title="Platform contract">
-        Every surface emits a stable <code className="font-mono text-[12px]">runId</code>,{" "}
-        <code className="font-mono text-[12px]">branchId</code>, and timeline
-        trace. You can author once, execute anywhere, and inspect the same
-        decision later from the dashboard.
+      <DocSub>Settings</DocSub>
+      <DocBody>
+        Workspace settings cover identity and configuration for your private
+        environment. Use settings to review workspace details and keep your
+        decision space tidy as the product grows.
+      </DocBody>
+
+      <TopicList
+        items={[
+          {
+            title: "Dashboard (HQ)",
+            body: "Goal snapshot, quick actions, recent simulations, and knowledge summary.",
+          },
+          {
+            title: "Continuity",
+            body: "Simulations and reports stay attached to the workspace so history compounds.",
+          },
+        ]}
+      />
+    </div>
+  );
+}
+
+// ============================================================
+// Goals
+// ============================================================
+
+function GoalsDocs() {
+  return (
+    <div>
+      <DocTitle>Goals</DocTitle>
+      <DocBody>
+        Goals define what Chronos optimizes for. A strong goal is specific enough
+        to rank futures, but open enough to explore more than one strategy.
+      </DocBody>
+
+      <DocSub>Creating goals</DocSub>
+      <DocBody>
+        Write the outcome you want in plain language. Example: “Reach $50k MRR
+        in 12 months without raising more than $1M.” Avoid vague goals like
+        “grow the business.”
+      </DocBody>
+
+      <DocSub>Goal priorities</DocSub>
+      <DocBody>
+        Priorities tell Chronos what matters most when futures conflict — speed
+        vs. risk, growth vs. runway, quality vs. cost. State ranked priorities so
+        trade-offs can be scored consistently.
+      </DocBody>
+
+      <DocSub>Constraints</DocSub>
+      <DocBody>
+        Constraints are hard or soft limits: budget caps, team size, deadlines,
+        regulatory requirements, or “must not do X.” Clear constraints reduce
+        unrealistic futures and improve recommendation quality.
+      </DocBody>
+
+      <DocSub>Success criteria</DocSub>
+      <DocBody>
+        Define how you will know a path worked. Criteria can be metrics
+        (revenue, retention), milestones (shipped feature, signed pilot), or
+        qualitative outcomes (team capacity preserved). These become the yardstick
+        for ranking.
+      </DocBody>
+
+      <Callout tone="tip" title="Goal quality tip">
+        Better inputs → better futures. Spend five minutes on priorities and
+        constraints before you run a large simulation.
       </Callout>
     </div>
   );
 }
 
 // ============================================================
-// Task Operating System
+// Knowledge Library
 // ============================================================
 
-function TaskOperatingSystemDocs() {
-  const tasks = [
-    ["01", "Research competitors", "research.competitors", "Maps alternatives, substitutes, and market position."],
-    ["02", "Estimate market", "market.estimate", "Estimates addressable demand and reachable initial segments."],
-    ["03", "Build roadmap", "roadmap.build", "Converts evidence into a dependency-aware execution sequence."],
-    ["04", "Predict adoption", "adoption.predict", "Models likely adoption curves, retention, and distribution constraints."],
-    ["05", "Financial simulation", "financial.simulate", "Simulates revenue, burn, runway, and capital scenarios."],
-    ["06", "Risk analysis", "risk.analyze", "Turns downside evidence into guardrails and ranking penalties."],
-  ] as const;
-
+function KnowledgeDocs() {
   return (
     <div>
-      <DocTitle>Task Operating System</DocTitle>
+      <DocTitle>Knowledge Library</DocTitle>
       <DocBody>
-        Chronos does not ask a user to choose an agent. The user provides an
-        objective; the Planner decomposes it into a task graph, the Scheduler
-        dispatches ready work, and the Runtime resolves registered capabilities.
+        The Knowledge Library stores documents, notes, and web resources that
+        provide context for simulations. Chronos is only as grounded as the
+        material you give it.
       </DocBody>
 
-      <DocSub>Objective to task graph</DocSub>
-      <Code lang="ts">{`const plan = await chronos.plan({
-  objective: "Launch startup",
-  workspace: "acme",
-  constraints: ["18 month runway"],
-});
-
-const outcome = await chronos.execute(plan);
-await chronos.commit(outcome.bestTimeline);`}</Code>
-
-      <div className="mt-6 divide-y divide-line border-y border-line">
-        {tasks.map(([number, title, capability, detail]) => (
-          <div key={number} className="grid grid-cols-[34px_1fr] gap-x-4 py-5 sm:grid-cols-[42px_180px_1fr] sm:gap-x-6">
-            <div className="font-mono text-[10px] tracking-[0.2em] text-chronos">{number}</div>
-            <div className="font-serif text-xl text-ink sm:text-2xl">{title}</div>
-            <div className="col-span-2 mt-2 text-[13px] leading-[1.65] text-ink-dim sm:col-span-1 sm:mt-0">
-              <code className="font-mono text-[10px] text-accent-2">{capability}</code>
-              <span className="mx-2 text-ink-faint">·</span>
-              {detail}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <DocSub>Capability registration</DocSub>
+      <DocSub>Upload PDF</DocSub>
       <DocBody>
-        A provider can be an LLM, a tool server, a human approval step, or a
-        deterministic function. It registers a capability; the engine routes
-        compatible tasks to it without hard-coding any individual agent.
+        Upload PDFs such as pitch decks, research reports, contracts summaries,
+        or strategy memos. Use them when the source of truth lives in a document
+        you already have.
       </DocBody>
-      <Code lang="ts">{`registry.register(
-  new CapabilityRegistration({
-    id: "market-research-v1",
-    providerId: "research-provider",
-    name: "Market research capability",
-    version: "1.0.0",
-    taskKinds: ["research.competitors", "market.estimate"],
-    capabilityKeys: ["research.competitors", "market.estimate"],
-  }),
-  async (task) => runResearch(task.input)
-);`}</Code>
 
-      <DocSub>Temporal versioning</DocSub>
+      <DocSub>Markdown</DocSub>
       <DocBody>
-        Task execution produces timeline evidence. Every decision can branch,
-        explore deeper subbranches, merge compatible evidence, then collapse to
-        one canonical path while retaining discarded futures for replay.
+        Import markdown files for specs, READMEs, and structured notes. Markdown
+        is ideal for technical context and product definitions.
       </DocBody>
-      <Code lang="ts">{`const child = branches.subbranch(parent, alternativeAction);
-const merged = branches.merge(timeline, [parent, child], "highest-score");
-const canonical = branches.collapse(
-  merged.timeline,
-  selectedBranch,
-  candidates,
-  "max-utility"
-);`}</Code>
 
-      <Callout tone="tip" title="Why capabilities matter">
-        Replace a research provider, financial model, or risk evaluator without
-        changing the task graph or Temporal Engine. The interface is the task,
-        not the agent identity.
+      <DocSub>Notes</DocSub>
+      <DocBody>
+        Write lightweight notes inside the workspace. Capture assumptions,
+        interview takeaways, or decision constraints that do not yet live in a
+        formal document.
+      </DocBody>
+
+      <DocSub>URL import</DocSub>
+      <DocBody>
+        Import web resources and public GitHub README content when external
+        context matters — market pages, competitor pages, or product docs.
+      </DocBody>
+
+      <DocSub>Search</DocSub>
+      <DocBody>
+        Search the library by keywords to find the right source before a run.
+        Keep titles descriptive so search stays useful as the library grows.
+      </DocBody>
+
+      <DocSub>Organization</DocSub>
+      <DocBody>
+        Prefer fewer high-signal sources over dumping everything. Group related
+        notes, retire outdated material, and refresh knowledge when the world
+        changes — then re-run simulations.
+      </DocBody>
+    </div>
+  );
+}
+
+// ============================================================
+// Simulations
+// ============================================================
+
+function SimulationsDocs() {
+  return (
+    <div>
+      <DocTitle>Simulations</DocTitle>
+      <DocBody>
+        Simulations are the core of Chronos. Each run takes your goal, context,
+        and constraints, then explores multiple futures instead of producing a
+        single answer.
+      </DocBody>
+
+      <DocSub>Inputs</DocSub>
+      <DocBody>
+        Primary inputs are the active goal, knowledge library content, and any
+        explicit constraints or success criteria. Richer, cleaner inputs produce
+        more actionable recommendations.
+      </DocBody>
+
+      <DocSub>Constraints</DocSub>
+      <DocBody>
+        Constraints bound the search space. They prevent futures that violate
+        hard rules (budget, time, policy) and help the ranking step prefer
+        realistic paths.
+      </DocBody>
+
+      <DocSub>How futures are generated</DocSub>
+      <DocBody>
+        Chronos generates multiple candidate strategies from your goal and
+        context. Each future is a coherent path: what you might do, what could
+        happen, and what trade-offs come with that path.
+      </DocBody>
+      <FlowSteps
+        steps={[
+          "Set a goal",
+          "Gather context",
+          "Generate multiple futures",
+          "Evaluate trade-offs",
+          "Rank outcomes",
+          "Recommend the best path",
+        ]}
+      />
+
+      <DocSub>Confidence</DocSub>
+      <DocBody>
+        Confidence signals how strongly the evaluation supports a given future
+        relative to alternatives and available evidence. Use confidence as a
+        guide — not a guarantee — especially when knowledge is incomplete.
+      </DocBody>
+
+      <DocSub>Trade-offs</DocSub>
+      <DocBody>
+        Every strong path has costs. Chronos surfaces trade-offs so you can see
+        what you gain and what you give up (speed, risk, capital, focus, or
+        optionality).
+      </DocBody>
+
+      <DocSub>Decision reports</DocSub>
+      <DocBody>
+        After a run, open the decision report for the recommended path, ranked
+        alternatives, risks, and reasoning. Reports are saved so you can return
+        later or compare versions.
+      </DocBody>
+
+      <Callout tone="info" title="Core loop">
+        Goal → context → multiple futures → trade-offs → ranking → recommendation.
+        Re-run when goals or knowledge change.
       </Callout>
     </div>
   );
 }
 
 // ============================================================
-// Concepts
+// Timeline
 // ============================================================
 
-function Concepts() {
+function TimelineDocs() {
   return (
     <div>
-      <DocTitle>Concepts</DocTitle>
+      <DocTitle>Timeline</DocTitle>
       <DocBody>
-        A task graph, a temporal pipeline, and a ranked timeline. Everything
-        else is built on top.
+        The timeline is how you inspect futures after a simulation — not as a
+        chat transcript, but as ranked paths you can compare over time.
       </DocBody>
 
-      <DocSub>World state</DocSub>
+      <DocSub>Timeline view</DocSub>
       <DocBody>
-        A world state is a snapshot of reality — the inputs to a decision. It
-        has three namespaces: <code className="font-mono text-[12px] text-chronos">agent</code> (the
-        decision-maker), <code className="font-mono text-[12px] text-accent-2">world</code> (the
-        goal), and <code className="font-mono text-[12px] text-accent-warm">context</code> (the
-        environment). Fields are typed and versioned.
+        The timeline presents the goal and the set of generated futures as cards
+        or nodes you can open. Each future includes summary, risk, confidence,
+        and next steps.
       </DocBody>
-      <Code lang="chronos">{`state {
-  agent.runway = 12          # months of cash
-  agent.mrr = 180            # thousands
-  world.competitor = 40      # millions
-  context.board = "watching"
-}`}</Code>
 
-      <DocSub>Actions</DocSub>
+      <DocSub>Future comparison</DocSub>
       <DocBody>
-        An action is a mutation on the world state plus a <code className="font-mono text-[12px] text-ink-dim">risk</code>{" "}
-        and <code className="font-mono text-[12px] text-ink-dim">reward</code> estimate. Each action becomes a branch
-        in the simulation.
+        Compare alternatives side by side: which path maximizes upside, which
+        protects runway, which is fastest. Comparison is how Chronos helps you
+        decide — not just generate options.
       </DocBody>
-      <Code lang="chronos">{`action "Raise Series A" {
-  agent.runway = 24
-  agent.mrr = 320
-  context.board = "hands-off"
-  risk = 0.4
-  reward = 0.82
-}`}</Code>
 
-      <DocSub>Scoring</DocSub>
+      <DocSub>Version history</DocSub>
       <DocBody>
-        A scoring function turns a state into a number in [0, 1]. It's pure,
-        deterministic, and runs in parallel across all branches. The engine
-        picks the highest score by default.
+        Simulations are versioned as context evolves. Revisit earlier versions
+        of a decision to see how recommendations changed when goals, knowledge,
+        or constraints shifted.
       </DocBody>
-      <Code lang="chronos">{`score growth(state) {
-  base = state.reward - state.risk
-  if state.context.board == "watching" {
-    base = base - 0.1
-  }
-  return clamp(base, 0, 1)
-}`}</Code>
 
-      <DocSub>Fork · Evaluate · Collapse</DocSub>
+      <DocSub>Re-running simulations</DocSub>
       <DocBody>
-        The runtime pipeline. <code className="font-mono text-[12px] text-chronos">fork</code> clones
-        the state once per action. <code className="font-mono text-[12px] text-accent-2">evaluate</code> runs
-        the scoring function on every branch. <code className="font-mono text-[12px] text-accent-warm">collapse</code> picks
-        the winner and commits it. The whole cycle completes in ~2ms for
-        a thousand branches.
+        Re-run when you add knowledge, tighten constraints, or revise the goal.
+        New runs keep lineage so you can track how the decision space moved.
       </DocBody>
-      <Code lang="chronos">{`run {
-  fork
-  evaluate with growth
-  collapse max-utility
-}`}</Code>
+    </div>
+  );
+}
 
-      <Callout tone="tip" title="Why this matters">
-        Before Chronos, agents reacted. They took an input and produced an
-        output, hoping it was right. With Chronos, agents simulate
-        consequences first. The difference is the difference between a
-        chatbot and a strategist.
+// ============================================================
+// Memory
+// ============================================================
+
+function MemoryDocs() {
+  return (
+    <div>
+      <DocTitle>Memory</DocTitle>
+      <DocBody>
+        Memory is what makes Chronos cumulative. Past simulations and decisions
+        stay attached to the workspace so you do not start from zero every time.
+      </DocBody>
+
+      <DocSub>Simulation history</DocSub>
+      <DocBody>
+        Every simulation is saved. Browse prior runs, reopen details, and see
+        how recommendations evolved across versions.
+      </DocBody>
+
+      <DocSub>Saved reports</DocSub>
+      <DocBody>
+        Decision reports remain available after a run. Use them for reviews,
+        stakeholder updates, or as context for the next simulation.
+      </DocBody>
+
+      <DocSub>Decision history</DocSub>
+      <DocBody>
+        Over time, the workspace becomes a record of what you considered, what
+        you preferred, and why — useful for audits, retros, and learning.
+      </DocBody>
+
+      <DocSub>Workspace continuity</DocSub>
+      <DocBody>
+        Goals, knowledge, timeline, and memory stay connected. That continuity is
+        the difference between a one-off AI answer and an evolving decision
+        system.
+      </DocBody>
+    </div>
+  );
+}
+
+// ============================================================
+// Decision Reports
+// ============================================================
+
+function DecisionReportsDocs() {
+  return (
+    <div>
+      <DocTitle>Decision reports</DocTitle>
+      <DocBody>
+        A decision report is the packaged outcome of a simulation: the
+        recommended path, why it won, what alternatives were close, and what
+        risks remain.
+      </DocBody>
+
+      <TopicList
+        items={[
+          {
+            title: "Recommendation",
+            body: "The strongest path ranked against your goal, priorities, and constraints.",
+          },
+          {
+            title: "Reasoning",
+            body: "Supporting rationale so you can inspect why Chronos preferred one future.",
+          },
+          {
+            title: "Trade-offs",
+            body: "What you gain and what you give up relative to other futures.",
+          },
+          {
+            title: "Risks & confidence",
+            body: "Where uncertainty remains and how strongly the ranking is supported.",
+          },
+          {
+            title: "Next steps",
+            body: "Concrete actions suggested by the winning path so you can execute.",
+          },
+          {
+            title: "Persistence",
+            body: "Reports stay in memory for comparison, re-runs, and decision history.",
+          },
+        ]}
+      />
+
+      <Callout tone="tip" title="How to use a report">
+        Share the report with stakeholders, challenge weak assumptions with new
+        knowledge, then re-run if the ranking still feels fragile.
       </Callout>
     </div>
   );
 }
 
 // ============================================================
-// API Reference
+// API (Coming Soon)
 // ============================================================
 
-function ApiReference() {
+function ApiDocs() {
   return (
     <div>
-      <DocTitle>API reference</DocTitle>
+      <DocTitle>
+        API{" "}
+        <span className="align-middle font-mono text-[12px] uppercase tracking-[0.2em] text-ink-faint">
+          Coming soon
+        </span>
+      </DocTitle>
       <DocBody>
-        Three ways to invoke Chronos: the Chronos language (for describing
-        futures), the SDK (for embedding in your agent), and the REST API
-        (for cross-language integration).
+        A public API is planned so you can drive Chronos programmatically —
+        run simulations, manage workspaces and knowledge, and read timelines from
+        your own tools. This page is a directional preview, not a live contract.
       </DocBody>
 
-      <DocSub>Chronos language</DocSub>
-      <DocBody>
-        A domain-specific language for describing futures. A Chronos program
-        has four constructs: <code className="font-mono text-[12px] text-chronos">state</code>,{" "}
-        <code className="font-mono text-[12px] text-ink">action</code>,{" "}
-        <code className="font-mono text-[12px] text-accent-2">score</code>, and{" "}
-        <code className="font-mono text-[12px] text-accent-warm">run</code>.
-      </DocBody>
-
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-        <div className="rounded-lg border border-line bg-bg-soft p-4">
-          <div className="font-mono text-[11px] text-chronos">state {"{ ... }"}</div>
-          <div className="mt-1 text-[12px] leading-[1.6] text-ink-dim">
-            Declares the world. Grouped by namespace (agent / world / context).
-          </div>
-        </div>
-        <div className="rounded-lg border border-line bg-bg-soft p-4">
-          <div className="font-mono text-[11px] text-ink">action "name" {"{ ... }"}</div>
-          <div className="mt-1 text-[12px] leading-[1.6] text-ink-dim">
-            Declares a candidate action with state mutations + risk/reward.
-          </div>
-        </div>
-        <div className="rounded-lg border border-line bg-bg-soft p-4">
-          <div className="font-mono text-[11px] text-accent-2">score name(state) {"{ ... }"}</div>
-          <div className="mt-1 text-[12px] leading-[1.6] text-ink-dim">
-            A pure function that scores a branch. Must return a number in [0, 1].
-          </div>
-        </div>
-        <div className="rounded-lg border border-line bg-bg-soft p-4">
-          <div className="font-mono text-[11px] text-accent-warm">run {"{ ... }"}</div>
-          <div className="mt-1 text-[12px] leading-[1.6] text-ink-dim">
-            Declares the pipeline. fork · evaluate · collapse.
-          </div>
-        </div>
-      </div>
-
-      <DocSub>Engine API (TypeScript)</DocSub>
-      <Code lang="ts">{`import { chronos, fork, evaluate, collapse } from "@chronos/sdk";
-
-const client = await chronos.connect({
-  key: process.env.CHRONOS_KEY,
-  region: "auto",
-});
-
-const branches = await fork(client.state, {
-  actions: plan.candidates,
-  horizon: "100y",
-});
-
-const scored = await branches.evaluate(async (ctx) => {
-  const outcome = await world.simulate(ctx);
-  return score(outcome);
-});
-
-const winner = await collapse(scored, {
-  strategy: "max-utility",
-  archive: true,
-});
-
-await client.commit(winner);`}</Code>
-
-      <DocSub>Strategy options</DocSub>
-      <div className="mt-4 space-y-2">
-        <div className="rounded-lg border border-line bg-bg-soft p-3">
-          <div className="flex items-baseline gap-3">
-            <code className="font-mono text-[12px] text-chronos">max-utility</code>
-            <span className="text-[12px] text-ink-dim">
-              Picks the branch with the highest score.
-            </span>
-          </div>
-        </div>
-        <div className="rounded-lg border border-line bg-bg-soft p-3">
-          <div className="flex items-baseline gap-3">
-            <code className="font-mono text-[12px] text-chronos">min-risk</code>
-            <span className="text-[12px] text-ink-dim">
-              Picks the branch with the lowest risk, regardless of reward.
-            </span>
-          </div>
-        </div>
-        <div className="rounded-lg border border-line bg-bg-soft p-3">
-          <div className="flex items-baseline gap-3">
-            <code className="font-mono text-[12px] text-chronos">balanced</code>
-            <span className="text-[12px] text-ink-dim">
-              Maximizes <code className="font-mono text-[11px]">reward - risk/2</code>. Default for conservative agents.
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// SDK
-// ============================================================
-
-function SdkDocs() {
-  return (
-    <div>
-      <DocTitle>SDK</DocTitle>
-      <DocBody>
-        Four SDKs. One engine. Embed Chronos in your agent in any language.
-      </DocBody>
-
-      <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
-        {[
-          { lang: "TypeScript", pkg: "@chronos/sdk", v: "v4.2.1", size: "14kb" },
-          { lang: "Python", pkg: "chronos", v: "v4.2.0", size: "18kb" },
-          { lang: "Rust", pkg: "chronos", v: "v4.2.1", size: "9kb" },
-          { lang: "Go", pkg: "github.com/chronos-labs/sdk-go", v: "v4.1.3", size: "12kb" },
-        ].map((s) => (
-          <div key={s.pkg} className="rounded-xl border border-line bg-bg-soft p-5">
-            <div className="flex items-baseline justify-between">
-              <div className="font-serif text-xl text-ink">{s.lang}</div>
-              <span className="rounded-full border border-chronos/30 bg-chronos/10 px-2 py-0.5 font-mono text-[10px] text-chronos">
-                {s.v}
-              </span>
-            </div>
-            <div className="mt-2 font-mono text-[12px] text-ink-dim break-all">
-              {s.pkg}
-            </div>
-            <div className="mt-1 font-mono text-[10px] text-ink-faint">
-              size: {s.size} gzipped
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <DocSub>Connect</DocSub>
-      <Code lang="ts">{`import { chronos } from "@chronos/sdk";
-
-const client = await chronos.connect({
-  key: process.env.CHRONOS_KEY,
-  region: "auto", // picks nearest region
-});`}</Code>
-
-      <DocSub>Fork</DocSub>
-      <Code lang="ts">{`const branches = await fork(client.state, {
-  actions: plan.candidates,
-  horizon: "100y",
-  budget: { ms: 2, cores: 64 },
-});`}</Code>
-
-      <DocSub>Evaluate</DocSub>
-      <Code lang="ts">{`const scored = await branches.evaluate(async (ctx) => {
-  const outcome = await world.simulate(ctx);
-  return score(outcome);
-});`}</Code>
-
-      <DocSub>Collapse</DocSub>
-      <Code lang="ts">{`const winner = await collapse(scored, {
-  strategy: "max-utility",
-  archive: true,
-});
-
-await client.commit(winner);`}</Code>
-
-      <Callout tone="tip" title="Async by default">
-        Every SDK operation is async and cancellable. Use{" "}
-        <code className="font-mono text-[12px]">AbortController</code> to
-        cancel a long-running evaluation.
+      <Callout tone="warn" title="Status">
+        Endpoints below are illustrative. Paths, payloads, and auth details will
+        be finalized when the API ships. Join the private beta for product access
+        today; API & SDK are on the roadmap.
       </Callout>
-    </div>
-  );
-}
 
-// ============================================================
-// REST API
-// ============================================================
-
-function RestDocs() {
-  return (
-    <div>
-      <DocTitle>REST API</DocTitle>
-      <DocBody>
-        A RESTful API over the Chronos Task Operating System. Use it from any
-        language, any environment. All endpoints require an API key passed via the{" "}
-        <code className="font-mono text-[12px] text-ink-dim">Authorization</code> header.
-      </DocBody>
-
-      <DocSub>Base URL</DocSub>
-      <Code lang="text">{`https://api.chronoslab.space/v1`}</Code>
-
-      <DocSub>Endpoints</DocSub>
+      <DocSub>Planned endpoints</DocSub>
       <div className="mt-4 space-y-3">
         <Endpoint
           method="POST"
-          path="/v1/plans"
-          desc="Turn an objective and constraints into a dependency-aware task graph."
-        />
-        <Endpoint
-          method="POST"
-          path="/v1/runs"
-          desc="Execute a task graph through registered capabilities and temporal branches."
+          path="/simulate"
+          desc="Start a simulation for a workspace goal with optional constraints and knowledge scope."
         />
         <Endpoint
           method="GET"
-          path="/v1/timelines/:id"
-          desc="Inspect canonical state, branches, subbranches, merges, collapse records, and replay events."
+          path="/workspaces"
+          desc="List workspaces available to the authenticated account."
+        />
+        <Endpoint
+          method="POST"
+          path="/knowledge"
+          desc="Upload or register knowledge sources (documents, notes, URLs) into a workspace library."
         />
         <Endpoint
           method="GET"
-          path="/v1/runs/:run_id"
-          desc="Inspect a full task run, including execution records, evaluations, and ranked timelines."
-        />
-        <Endpoint
-          method="POST"
-          path="/v1/branches/:id/subbranches"
-          desc="Explore a deeper alternative from an existing branch while retaining parent lineage."
-        />
-        <Endpoint
-          method="POST"
-          path="/v1/timelines/:id/merges"
-          desc="Converge compatible branch evidence without committing canonical state."
-        />
-        <Endpoint
-          method="POST"
-          path="/v1/timelines/:id/collapse"
-          desc="Rank candidate timelines and commit one canonical path while retaining discarded futures."
-        />
-        <Endpoint
-          method="GET"
-          path="/v1/workspaces/:id/knowledge"
-          desc="Read workspace learning context: past simulations, successful futures, failure patterns, and graph evidence."
-        />
-        <Endpoint
-          method="DELETE"
-          path="/v1/runs/:run_id"
-          desc="Delete a run and all its branches. Non-reversible."
+          path="/timeline"
+          desc="Fetch timeline futures, rankings, and version history for a simulation."
         />
       </div>
 
-      <DocSub>Example: Plan an objective</DocSub>
-      <Code lang="bash">{`curl -X POST https://api.chronoslab.space/v1/plans \\
-  -H "Authorization: Bearer $CHRONOS_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "objective": "Launch startup",
-    "workspace_id": "acme",
-    "constraints": ["18 month runway"],
-    "configuration": {
-      "model_version": "chronos-planner-v1",
-      "horizon": "18mo"
-    }
-  }'`}</Code>
+      <DocSub>Example (illustrative)</DocSub>
+      <Code lang="http">{`POST /simulate
+Authorization: Bearer <token>
+Content-Type: application/json
 
-      <DocSub>Response</DocSub>
-      <Code lang="json">{`{
-  "plan_id": "plan_0x7a2f",
-  "task_graph": [
-    { "id": "research-competitors", "status": "queued" },
-    { "id": "estimate-market", "depends_on": ["research-competitors"] },
-    { "id": "financial-simulation", "depends_on": ["estimate-market", "predict-adoption"] }
-  ],
-  "planner_version": "chronos-planner-v1",
-  "latency_ms": 0.31
+{
+  "workspace_id": "ws_...",
+  "goal": "Reach $50k MRR in 12 months",
+  "constraints": ["budget <= 1000000", "team_size <= 8"]
 }`}</Code>
 
-      <Callout tone="info" title="Rate limits">
-        Private workspace API access is rolling out through Cohort 04. Limits
-        are set per workspace, model version, and simulation budget.
+      <DocBody>
+        When the API launches, this section will expand into auth, rate limits,
+        SDKs, and full request/response schemas.
+      </DocBody>
+    </div>
+  );
+}
+
+// ============================================================
+// Roadmap
+// ============================================================
+
+function RoadmapDocs() {
+  return (
+    <div>
+      <DocTitle>Roadmap</DocTitle>
+      <DocBody>
+        Chronos ships in focused phases. Below is what is available now versus
+        what is planned — so you can trust the product status, not marketing
+        blur.
+      </DocBody>
+
+      <DocSub>Available now</DocSub>
+      <TopicList
+        items={[
+          {
+            title: "Workspaces",
+            body: "Private workspace HQ for goals, knowledge, and decision continuity.",
+          },
+          {
+            title: "Knowledge Library",
+            body: "PDFs, markdown, notes, and URL import with search.",
+          },
+          {
+            title: "Simulations",
+            body: "Multi-future generation, evaluation, ranking, and recommendations.",
+          },
+          {
+            title: "Timeline",
+            body: "Inspect and compare futures with versioned runs.",
+          },
+          {
+            title: "Decision reports",
+            body: "Saved reports with reasoning, risks, confidence, and next steps.",
+          },
+        ]}
+      />
+
+      <DocSub>Planned</DocSub>
+      <TopicList
+        items={[
+          {
+            title: "Team collaboration",
+            body: "Shared workspaces and multi-user decision workflows.",
+          },
+          {
+            title: "API & SDK",
+            body: "Programmatic simulate, knowledge, workspace, and timeline access.",
+          },
+          {
+            title: "Enterprise features",
+            body: "Org controls, admin tooling, and deployment options for larger teams.",
+          },
+          {
+            title: "CLAB integration",
+            body: "Ecosystem-level access, incentives, and coordination capabilities.",
+          },
+          {
+            title: "Advanced analytics",
+            body: "Deeper cross-run analysis and decision performance insights.",
+          },
+        ]}
+      />
+
+      <Callout tone="info" title="Product status">
+        Chronos is in active development and private beta. See the{" "}
+        <Link to="/roadmap" className="text-chronos underline-offset-2 hover:underline">
+          public roadmap
+        </Link>{" "}
+        and{" "}
+        <Link to="/changelog" className="text-chronos underline-offset-2 hover:underline">
+          changelog
+        </Link>{" "}
+        for shipping notes.
       </Callout>
     </div>
   );
 }
 
 // ============================================================
-// Architecture
+// Security & Privacy
 // ============================================================
 
-function Architecture() {
+function SecurityDocs() {
   return (
     <div>
-      <DocTitle>Architecture</DocTitle>
+      <DocTitle>Security & privacy</DocTitle>
       <DocBody>
-        Chronos is a temporal runtime built around six primitives. The
-        engine doesn't care about the domain — it cares about branching,
-        scoring, and collapsing.
+        Users will trust Chronos with important information. This section
+        documents how we think about storage, encryption, authentication,
+        ownership, and privacy.
       </DocBody>
 
-      <DocSub>The runtime</DocSub>
+      <DocSub>Data storage</DocSub>
       <DocBody>
-        Every Chronos invocation goes through the same three-phase pipeline.
-        The whole lifecycle completes in ~2ms for a thousand branches.
+        Workspace data — goals, knowledge, simulations, timelines, and reports —
+        is stored in your private workspace environment. Product data is not
+        treated as a public feed.
       </DocBody>
 
-      {/* Pipeline diagram */}
-      <div className="mt-6 rounded-xl border border-line bg-bg-soft p-6">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-5 md:items-center">
-          {[
-            { label: "STATE", color: "#c6f0ff" },
-            { label: "FORK", color: "#c6f0ff" },
-            { label: "EVALUATE", color: "#b79bff" },
-            { label: "COLLAPSE", color: "#ffd7a3" },
-            { label: "COMMIT", color: "#ffd7a3" },
-          ].map((s, i) => (
-            <div key={s.label} className="flex items-center gap-2">
-              <div
-                className="flex h-10 w-full items-center justify-center rounded-md border font-mono text-[11px] uppercase tracking-[0.2em]"
-                style={{ borderColor: `${s.color}50`, color: s.color, background: `${s.color}08` }}
-              >
-                {s.label}
-              </div>
-              {i < 4 && (
-                <svg width="12" height="12" viewBox="0 0 12 12" className="hidden shrink-0 text-ink-faint md:block">
-                  <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </div>
-          ))}
-        </div>
+      <DocSub>Encryption</DocSub>
+      <DocBody>
+        Data is protected in transit (TLS) and at rest using modern encryption
+        practices. Secrets such as AI provider keys are kept server-side (for
+        example via edge functions) and are not exposed to the browser.
+      </DocBody>
+
+      <DocSub>Authentication</DocSub>
+      <DocBody>
+        Access requires an authenticated session (magic link / password sign-in).
+        Workspace routes are protected so only signed-in users can reach private
+        product surfaces.
+      </DocBody>
+
+      <DocSub>Privacy policy</DocSub>
+      <DocBody>
+        Our privacy policy describes what we collect, how we use it, retention,
+        and your rights. Read the full policy on the privacy page.
+      </DocBody>
+      <div className="mt-4">
+        <Link
+          to="/privacy"
+          className="text-[13px] text-chronos underline-offset-2 hover:underline"
+        >
+          Privacy policy →
+        </Link>
       </div>
 
-      <div className="mt-10">
-        <SystemArchitecture />
+      <DocSub>Data ownership</DocSub>
+      <DocBody>
+        You retain rights to the content you submit. Chronos processes it to
+        operate the product and run simulations. We do not sell your data. See
+        Terms for the legal framing of service use.
+      </DocBody>
+      <div className="mt-4 flex flex-wrap gap-4">
+        <Link
+          to="/terms"
+          className="text-[13px] text-chronos underline-offset-2 hover:underline"
+        >
+          Terms of service →
+        </Link>
+        <Link
+          to="/security"
+          className="text-[13px] text-chronos underline-offset-2 hover:underline"
+        >
+          Security overview →
+        </Link>
       </div>
 
-      <DocSub>The six primitives</DocSub>
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-        {[
-          { n: "01", name: "fork", desc: "Clone state into isolated branches.", color: "#c6f0ff" },
-          { n: "02", name: "evaluate", desc: "Score branches in parallel.", color: "#b79bff" },
-          { n: "03", name: "collapse", desc: "Pick the winner by strategy.", color: "#ffd7a3" },
-          { n: "04", name: "commit", desc: "Persist winning state to timeline.", color: "#ffd7a3" },
-          { n: "05", name: "replay", desc: "Re-execute any archived branch.", color: "#b79bff" },
-          { n: "06", name: "query", desc: "Inspect causal graph & entropy.", color: "#c6f0ff" },
-        ].map((p) => (
-          <div key={p.n} className="rounded-lg border border-line bg-bg-soft p-4">
-            <div className="flex items-baseline gap-2">
-              <span
-                className="font-mono text-[10px] uppercase tracking-[0.25em]"
-                style={{ color: p.color }}
-              >
-                {p.n}
-              </span>
-              <code className="font-mono text-[13px] text-ink">{p.name}</code>
-            </div>
-            <div className="mt-1.5 text-[12px] leading-[1.55] text-ink-dim">{p.desc}</div>
-          </div>
-        ))}
-      </div>
-
-      <DocSub>Branch topology</DocSub>
-      <DocBody>
-        Every branch is byte-level isolated from every other branch. No
-        branch can observe or influence any other branch — including
-        branches belonging to other customers.
-      </DocBody>
-      <Code lang="chronos">{`run {
-  fork                # 1,000 isolated branches
-  evaluate with fn    # parallel scoring
-  collapse strategy   # winner + archive
-}`}</Code>
-
-      <DocSub>The world model</DocSub>
-      <DocBody>
-        Every simulation Chronos runs teaches it something about how the
-        world works. Over time, the world model compounds into an advantage
-        that's difficult to replicate.
-      </DocBody>
-      <Callout tone="tip" title="Why this matters">
-        A competitor could build the engine. They can't build the history.
+      <Callout tone="warn" title="Security reports">
+        If you discover a vulnerability, contact us privately through our
+        support channels. Do not post exploit details publicly.
       </Callout>
     </div>
   );
 }
 
 // ============================================================
-// Tutorials
+// Support
 // ============================================================
 
-function Tutorials() {
+function SupportDocs() {
   return (
     <div>
-      <DocTitle>Tutorials</DocTitle>
+      <DocTitle>Support</DocTitle>
       <DocBody>
-        Build three task-oriented workflows — one for releases, one for market
-        decisions, one for company strategy. Each tutorial takes ~20 minutes.
+        Need help, found a bug, or want to request a feature? Use the channels
+        below. We read every message.
       </DocBody>
 
-      <DocSub>Build a release planning workflow</DocSub>
-      <DocBody>
-        This workflow decides how to ship a feature under time pressure. The
-        Planner creates research, validation, and release tasks before the
-        temporal engine simulates ship, refactor, test, and defer timelines.
-      </DocBody>
-      <Code lang="chronos">{`state {
-  agent.velocity = 68
-  agent.days_left = 3
-  agent.quality = 45
-  world.bugs = 7
-  world.coverage = "fragile"
-  context.stakeholder = "watching"
-  context.debt_pressure = 6
-}
-
-action "Ship as-is" {
-  agent.days_left = 0
-  world.bugs = 7
-  context.debt_pressure = 9
-  risk = 0.65
-  reward = 0.85
-}
-
-action "Refactor first" {
-  agent.days_left = 5
-  agent.quality = 80
-  world.bugs = 2
-  world.coverage = "stable"
-  risk = 0.2
-  reward = 0.6
-}
-
-score utility(state) {
-  base = state.reward - 0.8 * state.risk
-  if state.context.stakeholder == "watching" {
-    base = base - 0.15
-  }
-  if state.context.debt_pressure > 5 {
-    base = base - (state.context.debt_pressure - 5) * 0.04
-  }
-  return clamp(base, 0, 1)
-}
-
-run {
-  fork
-  evaluate with utility
-  collapse max-utility
-}`}</Code>
-
-      <DocSub>Build a market decision workflow</DocSub>
-      <DocBody>
-        This workflow manages a $2.4M position ahead of a macro event. It
-        creates event, downside, hedge, and execution tasks before ranking the
-        resulting timelines.
-      </DocBody>
-      <Code lang="chronos">{`state {
-  agent.size = 72
-  agent.vol = 34
-  agent.conviction = 15
-  world.minutes_to_print = 40
-  world.pnl = 4
-  world.tape = "thin"
-  context.macro_wind = 8
-  context.signals = "mixed"
-}
-
-action "Add to position" {
-  agent.size = 90
-  agent.conviction = 55
-  world.pnl = 12
-  risk = 0.7
-  reward = 0.85
-}
-
-action "Hedge with puts" {
-  agent.conviction = 40
-  world.pnl = 2
-  world.tape = "thick"
-  risk = 0.15
-  reward = 0.4
-}
-
-score risk_adjusted(state) {
-  base = state.reward - state.risk
-  if state.agent.vol > 30 {
-    base = base - 0.1
-  }
-  if state.world.tape == "thin" {
-    base = base - 0.08
-  }
-  return clamp(base, 0, 1)
-}
-
-run {
-  fork
-  evaluate with risk_adjusted
-  collapse min-risk
-}`}</Code>
-
-      <DocSub>Build a startup launch workflow</DocSub>
-      <DocBody>
-        This workflow plans a company's next move with 12 months of runway and
-        a rising competitor. Chronos decomposes the objective into research,
-        market, roadmap, adoption, financial, and risk tasks.
-      </DocBody>
-      <Code lang="chronos">{`state {
-  agent.runway = 12
-  agent.mrr = 180
-  agent.momentum = 60
-  world.churn = 4
-  world.competitor = 40
-  context.board = "watching"
-  context.competitive_wind = 7
-}
-
-action "Raise Series A" {
-  agent.runway = 24
-  agent.mrr = 320
-  context.board = "hands-off"
-  risk = 0.4
-  reward = 0.82
-}
-
-action "Ship enterprise tier" {
-  agent.momentum = 78
-  agent.mrr = 210
-  world.competitor = 30
-  risk = 0.45
-  reward = 0.78
-}
-
-score growth(state) {
-  base = state.reward * 1.1 - state.risk * 0.9
-  if state.context.board == "watching" {
-    base = base - 0.1
-  }
-  if state.world.churn > 3 {
-    base = base - 0.15
-  }
-  return clamp(base, 0, 1)
-}
-
-run {
-  fork
-  evaluate with growth
-  collapse max-utility
-}`}</Code>
-
-      <Callout title="What's next">
-        Once you've built one agent, the others follow the same pattern:
-        declare state, declare actions, write a scoring function, run the
-        pipeline.
-      </Callout>
-    </div>
-  );
-}
-
-// ============================================================
-// Examples
-// ============================================================
-
-function Examples() {
-  return (
-    <div>
-      <DocTitle>Examples</DocTitle>
-      <DocBody>
-        Real Chronos programs, ready to run. Clone them, modify them, make
-        them yours.
-      </DocBody>
-
-      <div className="mt-6 space-y-4">
-        {[
+      <TopicList
+        items={[
           {
-            name: "Forge · feature branch",
-            lang: "TypeScript",
-            desc: "A coding agent deciding how to ship under time pressure.",
-            code: `state {
-  agent.velocity = 68
-  agent.days_left = 3
-  agent.quality = 45
-  world.bugs = 7
-  world.coverage = "fragile"
-  context.stakeholder = "watching"
-  context.debt_pressure = 6
-}
-
-action "Ship as-is" {
-  agent.days_left = 0
-  world.coverage = "fragile"
-  context.debt_pressure = 9
-  risk = 0.65
-  reward = 0.85
-}
-
-action "Refactor first" {
-  agent.days_left = 5
-  agent.quality = 80
-  world.bugs = 2
-  world.coverage = "stable"
-  risk = 0.2
-  reward = 0.6
-}
-
-score utility(state) {
-  base = state.reward - 0.8 * state.risk
-  if state.context.stakeholder == "watching" {
-    base = base - 0.15
-  }
-  return clamp(base, 0, 1)
-}
-
-run {
-  fork
-  evaluate with utility
-  collapse max-utility
-}`,
+            title: "Contact",
+            body: "General questions and private beta support via our contact page.",
           },
           {
-            name: "Oracle · live position",
-            lang: "Python",
-            desc: "A trading agent managing a $2.4M position before a macro print.",
-            code: `state {
-  agent.size = 72
-  agent.vol = 34
-  agent.conviction = 15
-  world.minutes_to_print = 40
-  world.pnl = 4
-  world.tape = "thin"
-  context.macro_wind = 8
-  context.signals = "mixed"
-}
-
-action "Add to position" {
-  agent.size = 90
-  agent.conviction = 55
-  world.pnl = 12
-  risk = 0.7
-  reward = 0.85
-}
-
-action "Hedge with puts" {
-  agent.conviction = 40
-  world.tape = "thick"
-  risk = 0.15
-  reward = 0.4
-}
-
-score risk_adjusted(state) {
-  base = state.reward - state.risk
-  if state.agent.vol > 30 {
-    base = base - 0.1
-  }
-  return clamp(base, 0, 1)
-}
-
-run {
-  fork
-  evaluate with risk_adjusted
-  collapse min-risk
-}`,
+            title: "X (Twitter)",
+            body: "@chronoslabspace — product updates and public conversation.",
           },
           {
-            name: "Atlas · board decision",
-            lang: "Rust",
-            desc: "A founder agent deciding the company's next move with limited runway.",
-            code: `state {
-  agent.runway = 12
-  agent.mrr = 180
-  agent.momentum = 60
-  world.churn = 4
-  world.competitor = 40
-  context.board = "watching"
-  context.competitive_wind = 7
-}
-
-action "Raise Series A" {
-  agent.runway = 24
-  agent.mrr = 320
-  context.board = "hands-off"
-  risk = 0.4
-  reward = 0.82
-}
-
-action "Hunker down" {
-  agent.runway = 18
-  agent.mrr = 150
-  context.competitive_wind = 9
-  risk = 0.25
-  reward = 0.35
-}
-
-score growth(state) {
-  base = state.reward * 1.1 - state.risk * 0.9
-  if state.world.churn > 3 {
-    base = base - 0.15
-  }
-  return clamp(base, 0, 1)
-}
-
-run {
-  fork
-  evaluate with growth
-  collapse max-utility
-}`,
+            title: "Telegram",
+            body: "Community group for early users, shipping notes, and discussion.",
           },
-        ].map((ex) => (
-          <div key={ex.name} className="overflow-hidden rounded-xl border border-line">
-            <div className="border-b border-line bg-bg-soft p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-serif text-lg text-ink">{ex.name}</div>
-                  <div className="mt-0.5 text-[12px] leading-[1.5] text-ink-dim">
-                    {ex.desc}
-                  </div>
-                </div>
-                <span className="rounded-full border border-line bg-bg px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
-                  {ex.lang}
-                </span>
-              </div>
-            </div>
-            <pre className="overflow-x-auto bg-bg p-4 font-mono text-[12px] leading-[1.7]">
-              <code className="text-ink-dim">{ex.code}</code>
-            </pre>
-          </div>
-        ))}
+          {
+            title: "FAQ",
+            body: "Short answers on Chronos, simulations, workspaces, and CLAB.",
+          },
+          {
+            title: "Bug reports",
+            body: "Describe steps to reproduce, expected vs. actual behavior, and workspace context.",
+          },
+          {
+            title: "Feature requests",
+            body: "Tell us the decision problem you are trying to solve — not only the UI control you want.",
+          },
+        ]}
+      />
+
+      <div className="mt-8 flex flex-wrap gap-2">
+        <Link
+          to="/contact"
+          className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-bg transition hover:bg-chronos"
+        >
+          Contact
+        </Link>
+        <Link
+          to="/faq"
+          className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-dim transition hover:border-line-strong hover:text-ink"
+        >
+          FAQ
+        </Link>
+        <a
+          href="https://x.com/chronoslabspace"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-dim transition hover:border-line-strong hover:text-ink"
+        >
+          X
+        </a>
+        <a
+          href="https://t.me/+I9MN0GfvgwllZGRh"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-dim transition hover:border-line-strong hover:text-ink"
+        >
+          Telegram
+        </a>
       </div>
 
-      <Callout tone="tip" title="Run them">
-        Every example runs in an approved <Link to="/access" className="text-chronos underline-offset-4 hover:underline">Chronos workspace</Link> or from the CLI with <code className="font-mono text-[12px]">chronos run</code>.
+      <Callout tone="info" title="GitHub & Discord">
+        Public GitHub issues and Discord will be linked here when community
+        channels open. Until then, use Contact, Telegram, or X.
       </Callout>
     </div>
   );

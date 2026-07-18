@@ -30,6 +30,9 @@ const Docs = lazy(async () => ({ default: (await import("./components/Docs")).Do
 const ChangelogPage = lazy(async () => ({
   default: (await import("./components/Changelog")).ChangelogPage,
 }));
+const FaqPage = lazy(async () => ({
+  default: (await import("./components/Faq")).FaqPage,
+}));
 
 const WorkspaceShell = lazy(async () => ({
   default: (await import("./features/workspace/WorkspaceShell")).WorkspaceShell,
@@ -146,6 +149,7 @@ function App() {
           <Route path="/intelligence" element={lazyRoute(<IntelligencePage />)} />
           <Route path="/shift" element={lazyRoute(<ShiftPage />)} />
           <Route path="/about" element={lazyRoute(<AboutPage />)} />
+          <Route path="/faq" element={lazyRoute(<FaqPage />)} />
           <Route path="/docs" element={lazyRoute(<Docs />)} />
           <Route path="/changelog" element={lazyRoute(<ChangelogPage />)} />
           <Route path="/contact" element={lazyRoute(<ContactPage />)} />

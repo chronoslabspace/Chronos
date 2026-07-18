@@ -11,6 +11,20 @@ export type Release = {
 
 const releases: Release[] = [
   {
+    version: "4.5.1",
+    date: "2026-07-18",
+    tag: "patch",
+    title: "Public FAQ & product docs",
+    summary:
+      "Marketing and onboarding surfaces catch up to the private workspace product: a short FAQ in the header, and documentation rewritten as a product manual instead of an SDK-first reference.",
+    highlights: [
+      { label: "FAQ", detail: "/faq with 10 short answers; linked from header nav and footer" },
+      { label: "Docs", detail: "Product manual: introduction, getting started, workspaces, goals, knowledge, simulations, timeline, memory, reports" },
+      { label: "API", detail: "Coming-soon placeholder for POST /simulate, GET /workspaces, POST /knowledge, GET /timeline" },
+      { label: "Trust", detail: "Roadmap available-vs-planned, security & privacy, and support channels in docs" },
+    ],
+  },
+  {
     version: "4.5.0",
     date: "2026-07-15",
     tag: "minor",
@@ -24,6 +38,7 @@ const releases: Release[] = [
       { label: "Security", detail: "XAI_API_KEY stored as function secret; JWT required" },
     ],
   },
+
   {
     version: "4.4.0",
     date: "2026-07-15",

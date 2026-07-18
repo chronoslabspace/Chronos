@@ -61,6 +61,7 @@ export function Footer() {
           </div>
           <ul className="space-y-3 text-sm">
             <li><Link to="/docs" className="text-ink-dim transition hover:text-ink">Docs</Link></li>
+            <li><Link to="/faq" className="text-ink-dim transition hover:text-ink">FAQ</Link></li>
             <li><Link to="/changelog" className="text-ink-dim transition hover:text-ink">Changelog</Link></li>
             <li><Link to="/security" className="text-ink-dim transition hover:text-ink">Security</Link></li>
             <li><Link to="/contact" className="text-ink-dim transition hover:text-ink">Support</Link></li>

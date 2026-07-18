@@ -93,7 +93,7 @@ export function HomePage() {
             <h2 className="font-serif text-4xl leading-[1] tracking-tight md:text-5xl">Ship temporal<br /><span className="italic text-ink-dim">reasoning anywhere.</span></h2>
             <p className="mt-6 max-w-md text-[15px] leading-[1.75] text-ink-dim">Use the SDK, API, CLI, or Visual Studio extension. Every surface shares the same task, timeline, branch, and memory contract.</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/docs?section=platform" className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm text-ink-dim transition hover:border-line-strong hover:text-ink">Read the platform docs →</Link>
+              <Link to="/docs?section=introduction" className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm text-ink-dim transition hover:border-line-strong hover:text-ink">Read the docs →</Link>
               <Link to="/developers" className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm text-ink-dim transition hover:border-line-strong hover:text-ink">View SDKs →</Link>
             </div>
           </div>

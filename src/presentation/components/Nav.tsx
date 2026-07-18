@@ -14,6 +14,7 @@ export function Nav() {
     { label: "Platform", to: "/platform" },
     { label: "Roadmap", to: "/roadmap" },
     { label: "About", to: "/about" },
+    { label: "FAQ", to: "/faq" },
   ];
 
   useEffect(() => {
