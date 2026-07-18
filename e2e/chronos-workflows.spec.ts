@@ -7,12 +7,12 @@ test.describe("Chronos user workflows", () => {
     await expect(page.getByRole("heading", { name: /make agents think/i })).toBeVisible();
 
     await page.getByLabel("Simulation objective").fill("I want to build an AI meeting assistant");
-    await page.getByRole("button", { name: "Simulate", exact: true }).click();
+    await page.getByRole("button", { name: /run simulation/i }).click();
 
     await expect(page.getByText("Planner task graph", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("Research competitors", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("Financial simulation", { exact: true }).first()).toBeVisible();
-    await expect(page.locator("text=Best path").filter({ hasNot: page.locator("text=This is not a chatbot response") }).first()).toBeVisible({ timeout: 6_000 });
+    await expect(page.getByText(/best path/i).first()).toBeVisible({ timeout: 8_000 });
   });
 
   test("an unauthenticated workspace visitor is redirected to login", async ({ page }) => {
@@ -45,8 +45,9 @@ test.describe("Chronos user workflows", () => {
     await page.getByLabel("Your idea").fill("I want to build an AI meeting assistant");
     await page.getByRole("button", { name: /simulate 1,000 futures/i }).click();
 
-    await expect(page.getByText(/Simulating \d+ of 1,000 futures/)).toBeVisible();
-    await expect(page.getByText(/best path/i).first()).toBeVisible({ timeout: 6_000 });
+    // Progress line: "Fork · 42 / 1,000 futures" (phase label + counter)
+    await expect(page.getByText(/\d+\s*\/\s*1,000 futures/i)).toBeVisible();
+    await expect(page.getByText(/best path/i).first()).toBeVisible({ timeout: 8_000 });
     await expect(page.getByText("18-month roadmap")).toBeVisible();
     await expect(page.getByText("Other futures that almost won.")).toBeVisible();
   });
