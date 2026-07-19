@@ -23,15 +23,17 @@ export function TaskGraphPreview({ graph, capabilityName }: TaskGraphPreviewProp
         <div className="flex min-w-max items-center gap-2">
           {graph.tasks.map((task, index) => (
             <div key={task.id} className="flex items-center gap-2">
-              <div className="w-[145px] rounded-lg border border-line bg-bg p-3">
+              <div className="w-[160px] shrink-0 rounded-lg border border-line bg-bg p-3 sm:w-[168px]">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[9px] tracking-[0.18em] text-chronos">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <span className="h-1.5 w-1.5 rounded-full bg-chronos" />
                 </div>
-                <div className="mt-3 font-serif text-[17px] leading-[1.05] text-ink">{task.title}</div>
-                <div className="mt-2 truncate font-mono text-[9px] uppercase tracking-[0.15em] text-ink-faint">
+                <div className="mt-3 break-words font-serif text-[16px] leading-snug text-ink sm:text-[17px]">
+                  {task.title}
+                </div>
+                <div className="mt-2 break-all font-mono text-[9px] uppercase tracking-[0.12em] text-ink-faint">
                   {task.capability}
                 </div>
               </div>

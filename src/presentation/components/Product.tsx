@@ -515,19 +515,19 @@ function BranchTree({ engine }: { engine: Engine }) {
   const hasBranches = branches.length > 0;
 
   return (
-    <div className="glow-border relative h-full min-h-[500px] overflow-hidden rounded-xl border border-line bg-bg-soft">
-      <div className="flex items-center justify-between border-b border-line px-5 py-3">
+    <div className="glow-border relative h-full min-h-[320px] overflow-hidden rounded-xl border border-line bg-bg-soft sm:min-h-[500px]">
+      <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
         <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint">
           Branch Topology
         </div>
-        <div className="font-mono text-[10px] text-ink-faint">
+        <div className="shrink-0 font-mono text-[10px] text-ink-faint">
           {hasBranches ? `${branches.length} branches` : "no branches"}
         </div>
       </div>
 
-      <div className="relative p-5">
+      <div className="relative overflow-x-auto p-3 sm:p-5">
         {!hasBranches ? (
-          <div className="flex h-[440px] flex-col items-center justify-center">
+          <div className="flex h-[280px] flex-col items-center justify-center sm:h-[440px]">
             <svg width="60" height="60" viewBox="0 0 60 60" className="mb-4 text-ink-faint">
               <circle cx="30" cy="30" r="20" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="2 4" />
               <circle cx="30" cy="30" r="4" fill="currentColor" opacity="0.4" />
@@ -539,7 +539,7 @@ function BranchTree({ engine }: { engine: Engine }) {
         ) : branches.length > 60 ? (
           <VirtualBranchList branches={branches} />
         ) : (
-          <svg viewBox="0 0 600 440" className="h-auto w-full" preserveAspectRatio="xMidYMid meet">
+          <svg viewBox="0 0 640 440" className="h-auto min-w-[520px] w-full" preserveAspectRatio="xMidYMid meet">
             <defs>
               <linearGradient id="br-branch" x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="#c6f0ff" stopOpacity="0.8" />

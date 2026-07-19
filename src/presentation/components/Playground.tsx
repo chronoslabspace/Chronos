@@ -117,29 +117,31 @@ export function Playground() {
 
         {/* Demo panel */}
         <div className="glow-border relative overflow-hidden rounded-2xl border border-line bg-bg-soft">
-          {/* Phase tabs */}
-          <div className="flex items-center justify-between border-b border-line px-6 py-4">
-            <div className="flex items-center gap-1">
-              {[
-                { key: "fork", label: "01 · fork" },
-                { key: "evaluate", label: "02 · evaluate" },
-                { key: "collapse", label: "03 · collapse" },
-                { key: "done", label: "04 · commit" },
-              ].map((p) => {
-                const active = phase === p.key || (phase === "idle" && p.key === "fork");
-                return (
-                  <div
-                    key={p.key}
-                    className={`rounded-full px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] transition ${
-                      active ? "bg-chronos/15 text-chronos" : "text-ink-faint"
-                    }`}
-                  >
-                    {p.label}
-                  </div>
-                );
-              })}
+          {/* Phase tabs — scroll on narrow screens so labels are not cropped */}
+          <div className="flex flex-col gap-3 border-b border-line px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="-mx-1 overflow-x-auto px-1 pb-0.5">
+              <div className="flex min-w-max items-center gap-1">
+                {[
+                  { key: "fork", label: "01 · fork" },
+                  { key: "evaluate", label: "02 · evaluate" },
+                  { key: "collapse", label: "03 · collapse" },
+                  { key: "done", label: "04 · commit" },
+                ].map((p) => {
+                  const active = phase === p.key || (phase === "idle" && p.key === "fork");
+                  return (
+                    <div
+                      key={p.key}
+                      className={`shrink-0 rounded-full px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] transition ${
+                        active ? "bg-chronos/15 text-chronos" : "text-ink-faint"
+                      }`}
+                    >
+                      {p.label}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
+            <div className="shrink-0 font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
               {phase === "idle" && "0.0ms"}
               {phase === "fork" && "0.3ms"}
               {phase === "evaluate" && "1.4ms"}
@@ -150,8 +152,8 @@ export function Playground() {
 
           {/* Main content: canvas + side panel */}
           <div className="grid grid-cols-1 lg:grid-cols-12">
-            {/* Canvas */}
-            <div className="relative aspect-[21/9] w-full lg:col-span-8 lg:aspect-auto lg:min-h-[480px]">
+            {/* Canvas — taller on mobile so branch labels stay in view */}
+            <div className="relative aspect-[16/10] w-full min-h-[220px] sm:aspect-[21/9] lg:col-span-8 lg:aspect-auto lg:min-h-[480px]">
               <PlaygroundCanvas
                 phase={phase}
                 evalProgress={evalProgress}

@@ -43,7 +43,7 @@ export function PageHeader({ eyebrow, title, subtitle, breadcrumb }: PageHeaderP
           <div className="h-px w-10 bg-line" />
         </div>
 
-        <h1 className="max-w-full break-words font-serif text-[clamp(2rem,7vw,5.5rem)] leading-[1.05] tracking-tight">
+        <h1 className="max-w-full break-words font-serif text-[clamp(2rem,7vw,5.5rem)] leading-[1.12] tracking-tight [overflow-wrap:anywhere]">
           {title}
         </h1>
 

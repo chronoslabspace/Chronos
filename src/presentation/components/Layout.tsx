@@ -14,7 +14,7 @@ export function Layout() {
   }, [pathname]);
 
   return (
-    <div className="relative min-h-screen bg-bg text-ink overflow-hidden">
+    <div className="relative min-h-screen overflow-x-hidden bg-bg text-ink">
       {/* Ambient glow */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <StarField />
