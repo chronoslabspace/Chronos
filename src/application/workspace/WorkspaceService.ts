@@ -2,6 +2,7 @@ import {
   simulationEngine,
   type SimulationConstraint,
 } from "../simulation/SimulationEngine";
+import { snapshotKnowledgeUsed } from "../../domain/workspace/simulationReport";
 import type {
   GoalRecord,
   KnowledgeRecord,
@@ -217,6 +218,57 @@ export class WorkspaceService {
     });
   }
 
+  async updateKnowledge(
+    ownerId: string,
+    knowledgeId: string,
+    patch: {
+      title?: string;
+      content?: string;
+      metadata?: Record<string, unknown>;
+      type?: KnowledgeType;
+    }
+  ): Promise<WorkspaceHome> {
+    const home = await this.require(ownerId);
+    const existing = home.knowledge.find((k) => k.id === knowledgeId);
+    if (!existing) throw new Error("Knowledge item not found.");
+
+    const title =
+      patch.title !== undefined ? patch.title.trim() : existing.title;
+    if (!title) throw new Error("Knowledge title is required.");
+
+    const updated: KnowledgeRecord = {
+      ...existing,
+      title,
+      content:
+        patch.content !== undefined ? patch.content.trim() : existing.content,
+      metadata: patch.metadata !== undefined ? patch.metadata : existing.metadata,
+      type: patch.type ?? existing.type,
+    };
+
+    return this.persist(ownerId, {
+      ...home,
+      knowledge: home.knowledge.map((k) => (k.id === knowledgeId ? updated : k)),
+    });
+  }
+
+  async deleteKnowledge(ownerId: string, knowledgeId: string): Promise<WorkspaceHome> {
+    const home = await this.require(ownerId);
+    if (!home.knowledge.some((k) => k.id === knowledgeId)) {
+      throw new Error("Knowledge item not found.");
+    }
+    if (this.remote) {
+      try {
+        await this.remote.deleteKnowledge(knowledgeId);
+      } catch (err) {
+        console.warn("[workspace] Supabase deleteKnowledge failed; local updated.", err);
+      }
+    }
+    return this.persist(ownerId, {
+      ...home,
+      knowledge: home.knowledge.filter((k) => k.id !== knowledgeId),
+    });
+  }
+
   async addNote(ownerId: string, title: string, content: string): Promise<WorkspaceHome> {
     const home = await this.require(ownerId);
     const trimmedTitle = title.trim();
@@ -244,6 +296,26 @@ export class WorkspaceService {
       ...home,
       notes: [note, ...home.notes],
       knowledge: [knowledgeNote, ...home.knowledge],
+    });
+  }
+
+  async deleteNote(ownerId: string, noteId: string): Promise<WorkspaceHome> {
+    const home = await this.require(ownerId);
+    if (!home.notes.some((n) => n.id === noteId)) {
+      throw new Error("Note not found.");
+    }
+    if (this.remote) {
+      try {
+        await this.remote.deleteNote(noteId);
+      } catch (err) {
+        console.warn("[workspace] Supabase deleteNote failed; local updated.", err);
+      }
+    }
+    return this.persist(ownerId, {
+      ...home,
+      notes: home.notes.filter((n) => n.id !== noteId),
+      // Drop mirrored knowledge rows linked to this note
+      knowledge: home.knowledge.filter((k) => k.metadata?.note_id !== noteId),
     });
   }
 
@@ -314,6 +386,7 @@ export class WorkspaceService {
     });
 
     const objectiveForEngine = parent ? parent.title : title;
+    const knowledgeUsed = snapshotKnowledgeUsed(home.knowledge, home.notes);
 
     const output = simulationEngine.run({
       simulationId: simId,
@@ -344,6 +417,9 @@ export class WorkspaceService {
         constraints: constraints.map((c) => `${c.kind}: ${c.text}`),
         planner_tasks: output.plannerTaskTitles,
         report_saved_at: createdAt,
+        knowledge_used: knowledgeUsed,
+        goal_title: home.goal?.title ?? null,
+        goal_description: home.goal?.description ?? null,
       },
       created_at: createdAt,
       version,
@@ -380,6 +456,64 @@ export class WorkspaceService {
         ? (parent.result.constraints as string[]).map((c) => c.replace(/^(hard|soft):\s*/i, ""))
         : []);
     return this.runSimulation(ownerId, parent.title, lines, { parentSimulationId });
+  }
+
+  /**
+   * Product loop close: user chooses a future path and saves the decision.
+   * Persists chosen_future_* on the simulation and logs a decision note.
+   */
+  async chooseBestPath(
+    ownerId: string,
+    simulationId: string,
+    futureId: string
+  ): Promise<WorkspaceHome> {
+    const home = await this.require(ownerId);
+    const sim = home.recentSimulations.find((s) => s.id === simulationId);
+    if (!sim) throw new Error("Simulation not found.");
+    const futures = home.futuresBySimulation[simulationId] ?? [];
+    const future = futures.find((f) => f.id === futureId);
+    if (!future) throw new Error("Future not found on this simulation.");
+
+    const chosenAt = nowIso();
+    const updatedSim: SimulationRecord = {
+      ...sim,
+      result: {
+        ...sim.result,
+        chosen_future_id: future.id,
+        chosen_future_name: future.name,
+        chosen_summary: future.summary,
+        chosen_at: chosenAt,
+        // Keep engine ranking; user choice is explicit
+        best_future: future.name,
+      },
+    };
+
+    const decisionNote: NoteRecord = {
+      id: uuid(),
+      workspace_id: home.workspace.id,
+      title: `Decision: ${future.name}`,
+      content: [
+        `# Chosen path`,
+        ``,
+        `**Simulation:** ${sim.title} (v${sim.version})`,
+        `**Path:** ${future.name}`,
+        `**Confidence:** ${(future.confidence * 100).toFixed(0)}%`,
+        `**Risk:** ${(future.risk * 100).toFixed(0)}%`,
+        ``,
+        future.summary,
+        ``,
+        `Saved ${chosenAt}`,
+      ].join("\n"),
+      created_at: chosenAt,
+    };
+
+    return this.persist(ownerId, {
+      ...home,
+      recentSimulations: home.recentSimulations.map((s) =>
+        s.id === simulationId ? updatedSim : s
+      ),
+      notes: [decisionNote, ...home.notes],
+    });
   }
 
   private parseConstraints(lines: string[]): SimulationConstraint[] {
@@ -421,8 +555,8 @@ export class WorkspaceService {
       futuresBySimulation: home.futuresBySimulation ?? {},
       timelineBySimulation: home.timelineBySimulation ?? {},
       workspace: {
-        description: "",
         ...home.workspace,
+        description: home.workspace.description ?? "",
       },
       recentSimulations: home.recentSimulations.map((sim) => ({
         ...sim,

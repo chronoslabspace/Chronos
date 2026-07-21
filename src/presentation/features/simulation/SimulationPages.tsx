@@ -5,9 +5,11 @@ import {
   formatCreatedAt,
 } from "../../../domain/workspace/seed";
 import type { SimulationTaskRecord } from "../../../domain/workspace/types";
-import { workspaceGrokService } from "../../../application/workspace/WorkspaceGrokService";
+import { buildDecisionReport } from "../../../domain/workspace/decisionReport";
 import { FutureTimelineCards } from "../timeline/FutureTimelineCards";
 import { useWorkspace } from "../workspace/WorkspaceContext";
+import { DecisionReportCard } from "./components/DecisionReportCard";
+import { FutureComparison } from "./components/FutureComparison";
 
 export function SimulationsPage() {
   const { home, runSimulation, error } = useWorkspace();
@@ -188,16 +190,14 @@ export function SimulationsPage() {
 }
 
 export function SimulationDetailPage() {
-  const { home, rerunSimulation } = useWorkspace();
+  const { home, rerunSimulation, chooseBestPath } = useWorkspace();
   const { simulationId } = useParams();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const sim = home?.recentSimulations.find((s) => s.id === simulationId);
   const futures = simulationId ? home?.futuresBySimulation[simulationId] ?? [] : [];
   const [rerunning, setRerunning] = useState(false);
-  const [grokBusy, setGrokBusy] = useState(false);
-  const [grokBrief, setGrokBrief] = useState<string | null>(null);
-  const [grokError, setGrokError] = useState<string | null>(null);
+  const [selectedFutureId, setSelectedFutureId] = useState<string | null>(null);
 
   const tasks = useMemo(() => {
     const raw = sim?.result.tasks;
@@ -227,13 +227,6 @@ export function SimulationDetailPage() {
     );
   }
 
-  const recommendation =
-    typeof sim.result.recommendation === "string"
-      ? sim.result.recommendation
-      : sim.result.thesis
-        ? String(sim.result.thesis)
-        : "—";
-
   const handleRerun = async () => {
     setRerunning(true);
     try {
@@ -245,26 +238,18 @@ export function SimulationDetailPage() {
     }
   };
 
-  const handleGrokEnhance = async () => {
-    setGrokBusy(true);
-    setGrokError(null);
-    try {
-      const brief = await workspaceGrokService.enhanceSimulationReport(home, sim.id);
-      setGrokBrief(brief);
-    } catch (err) {
-      setGrokError((err as Error).message);
-    } finally {
-      setGrokBusy(false);
-    }
-  };
-
   const wantsRerun = params.get("rerun") === "1";
+  const decisionReport =
+    sim.status === "completed" ? buildDecisionReport(home, sim, futures) : null;
+  const chosenId =
+    typeof sim.result.chosen_future_id === "string" ? sim.result.chosen_future_id : null;
+  const activeFutureId = selectedFutureId ?? chosenId ?? futures[0]?.id ?? null;
 
   return (
     <div className="space-y-10">
       <div>
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint">
-          Report · {home.workspace.name}
+          Simulation · {home.workspace.name}
         </div>
         <h1 className="mt-2 font-serif text-3xl text-ink">{sim.title}</h1>
         <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -297,30 +282,12 @@ export function SimulationDetailPage() {
             </Link>
           )}
           <Link
-            to="/workspace/memory"
-            className="rounded-full border border-line px-4 py-2 text-sm text-ink-dim hover:text-ink"
+            to="/workspace/timeline"
+            className="rounded-full border border-line px-4 py-2 text-sm text-ink hover:border-chronos/50 hover:text-chronos"
           >
-            Memory
+            Timeline
           </Link>
-          <button
-            type="button"
-            onClick={() => void handleGrokEnhance()}
-            disabled={grokBusy}
-            className="rounded-full border border-chronos/40 px-4 py-2 text-sm text-chronos transition hover:bg-chronos/10 disabled:opacity-50"
-          >
-            {grokBusy ? "Grok…" : "Enhance with Grok"}
-          </button>
         </div>
-
-        {grokError && <p className="mt-3 text-sm text-red-400">{grokError}</p>}
-        {grokBrief && (
-          <div className="mt-4 rounded-xl border border-chronos/30 bg-chronos/5 p-4">
-            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-chronos">
-              Grok brief
-            </div>
-            <div className="mt-2 whitespace-pre-wrap text-sm text-ink-dim">{grokBrief}</div>
-          </div>
-        )}
 
         {wantsRerun && (
           <p className="mt-3 text-sm text-ink-dim">
@@ -384,28 +351,24 @@ export function SimulationDetailPage() {
         </ol>
       </section>
 
-      {/* Best recommendation */}
-      <section className="border border-chronos/30 bg-chronos/5 p-5">
-        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-chronos">
-          Best recommendation
-        </div>
-        <p className="mt-3 text-lg text-ink">{recommendation}</p>
-        <div className="mt-4 flex flex-wrap gap-4 text-sm">
-          <span className="text-ink-dim">
-            Top future:{" "}
-            <span className="text-ink">{String(sim.result.best_future ?? "—")}</span>
-          </span>
-          <span className="font-mono text-chronos">
-            {confidencePercent(sim.confidence)}
-          </span>
-        </div>
-      </section>
+      {decisionReport && <DecisionReportCard report={decisionReport} />}
 
-      {/* Phase 5 — card timeline */}
+      <FutureComparison
+        futures={futures}
+        chosenFutureId={chosenId}
+        selectedId={activeFutureId}
+        onSelect={setSelectedFutureId}
+      />
+
       <FutureTimelineCards
         goalTitle={home.goal?.title ?? sim.title}
         futures={futures}
         simulationRisks={risks}
+        chosenFutureId={chosenId}
+        onChoosePath={async (futureId) => {
+          await chooseBestPath(sim.id, futureId);
+          setSelectedFutureId(futureId);
+        }}
       />
 
       <Back to="/workspace/simulations" label="All simulations" />

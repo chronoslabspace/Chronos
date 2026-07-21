@@ -29,9 +29,21 @@ type WorkspaceContextValue = {
     content?: string;
     metadata?: Record<string, unknown>;
   }) => Promise<void>;
+  updateKnowledge: (
+    knowledgeId: string,
+    patch: {
+      title?: string;
+      content?: string;
+      metadata?: Record<string, unknown>;
+      type?: KnowledgeType;
+    }
+  ) => Promise<void>;
+  deleteKnowledge: (knowledgeId: string) => Promise<void>;
   addNote: (title: string, content: string) => Promise<void>;
-  runSimulation: (objective: string, constraints?: string[]) => Promise<string | null>;
+  deleteNote: (noteId: string) => Promise<void>;
+  runSimulation: (objective: string, constraints?: string[]) => Promise<void>;
   rerunSimulation: (parentSimulationId: string, constraints?: string[]) => Promise<string | null>;
+  chooseBestPath: (simulationId: string, futureId: string) => Promise<void>;
   refresh: () => Promise<void>;
 };
 
@@ -44,10 +56,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Prefer local session (same source as ProtectedRoute) so createWorkspace
-   * does not race a null ownerId after magic-link recovery or slow first paint.
-   */
   const resolveOwnerId = useCallback(async (): Promise<string | null> => {
     const session = await authService.currentSession();
     if (session?.user?.id) return session.user.id;
@@ -104,7 +112,6 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         throw new Error(message);
       }
       if (!ownerId) setOwnerId(id);
-
       setError(null);
       try {
         const next = await action(id);
@@ -144,8 +151,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         try {
           const next = await workspaceService.switchWorkspace(id, workspaceId);
           setHome(next);
-          const list = await workspaceService.listWorkspaces(id);
-          setWorkspaces(list);
+          setWorkspaces(await workspaceService.listWorkspaces(id));
         } catch (err) {
           setError((err as Error).message);
           throw err;
@@ -159,20 +165,29 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       addKnowledge: async (input) => {
         await withOwner((id) => workspaceService.addKnowledge(id, input));
       },
+      updateKnowledge: async (knowledgeId, patch) => {
+        await withOwner((id) => workspaceService.updateKnowledge(id, knowledgeId, patch));
+      },
+      deleteKnowledge: async (knowledgeId) => {
+        await withOwner((id) => workspaceService.deleteKnowledge(id, knowledgeId));
+      },
       addNote: async (title, content) => {
         await withOwner((id) => workspaceService.addNote(id, title, content));
       },
+      deleteNote: async (noteId) => {
+        await withOwner((id) => workspaceService.deleteNote(id, noteId));
+      },
       runSimulation: async (objective, constraints = []) => {
-        const next = await withOwner((id) =>
-          workspaceService.runSimulation(id, objective, constraints)
-        );
-        return next.recentSimulations[0]?.id ?? null;
+        await withOwner((id) => workspaceService.runSimulation(id, objective, constraints));
       },
       rerunSimulation: async (parentSimulationId, constraints) => {
         const next = await withOwner((id) =>
           workspaceService.rerunSimulation(id, parentSimulationId, constraints)
         );
         return next.recentSimulations[0]?.id ?? null;
+      },
+      chooseBestPath: async (simulationId, futureId) => {
+        await withOwner((id) => workspaceService.chooseBestPath(id, simulationId, futureId));
       },
     }),
     [ownerId, home, workspaces, loading, error, refresh, withOwner, resolveOwnerId]

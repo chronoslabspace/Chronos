@@ -11,37 +11,21 @@ export type Release = {
 
 const releases: Release[] = [
   {
-    version: "4.5.2",
-    date: "2026-07-18",
-    tag: "patch",
-    title: "First-sim UX, cloud memory sync, richer demos",
+    version: "4.6.0",
+    date: "2026-07-16",
+    tag: "minor",
+    title: "Decision Workspace restored",
     summary:
-      "Tightens the path from landing to first recommendation, starts multi-device workspace memory sync, and polishes public demos plus mobile layout after the FAQ/docs ship.",
+      "Full decision loop on main: mandatory onboarding, Workspace Pulse, Decision Report, multi-future comparison, timeline cards, and slim primary nav (Dashboard · Knowledge · Simulations · Timeline · Settings).",
     highlights: [
-      { label: "First sim", detail: "Open report after run; Knowledge in workspace nav; empty-state CTAs; neutral onboarding defaults" },
-      { label: "Sync", detail: "Load merges local+remote homes; empty cloud backfill; futures upsert; schema versioning alignment" },
-      { label: "Demos", detail: "Richer home live demo + /simulate pipeline, ranked futures, recommendation banner" },
-      { label: "Motion", detail: "Enhanced temporal decision tree hero animation (phases, futures counter, flow)" },
-      { label: "Docs UI", detail: "Cerebrum page header on /docs; README screenshot + structure refresh" },
-      { label: "Mobile", detail: "Tablet nav no longer collides; pipeline rails scroll; full-width CTAs; Library bottom-tab label" },
-      { label: "Social", detail: "X/Open Graph card image (public/og-image.png) for Chronos Lab link previews" },
+      { label: "Decision Report", detail: "Recommended path, confidence, why, risks, next actions — screenshot-ready" },
+      { label: "Onboarding", detail: "Create → Name → Goal → Context → Dashboard (no skip)" },
+      { label: "Pulse", detail: "Knowledge coverage, simulation confidence, open tasks, recommendation" },
+      { label: "Comparison", detail: "All ranked futures with confidence bars — not a single answer" },
+      { label: "Timeline", detail: "Goal → Future A ⭐ → B → C; choose and save path" },
+      { label: "Nav", detail: "Primary chrome simplified; Memory/Grok remain deep-linkable" },
     ],
   },
-  {
-    version: "4.5.1",
-    date: "2026-07-18",
-    tag: "patch",
-    title: "Public FAQ & product docs",
-    summary:
-      "Marketing and onboarding surfaces catch up to the private workspace product: a short FAQ in the header, and documentation rewritten for the workspace product (Cerebrum header on /docs).",
-    highlights: [
-      { label: "FAQ", detail: "/faq with 10 short answers; linked from header nav and footer" },
-      { label: "Docs", detail: "/docs (Cerebrum): introduction, getting started, workspaces, goals, knowledge, simulations, timeline, memory, reports" },
-      { label: "API", detail: "Coming-soon placeholder for POST /simulate, GET /workspaces, POST /knowledge, GET /timeline" },
-      { label: "Trust", detail: "Roadmap available-vs-planned, security & privacy, and support channels in docs" },
-    ],
-  },
-
   {
     version: "4.5.0",
     date: "2026-07-15",
@@ -56,7 +40,6 @@ const releases: Release[] = [
       { label: "Security", detail: "XAI_API_KEY stored as function secret; JWT required" },
     ],
   },
-
   {
     version: "4.4.0",
     date: "2026-07-15",

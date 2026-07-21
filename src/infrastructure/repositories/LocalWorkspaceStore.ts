@@ -20,8 +20,8 @@ function normalizeHome(home: WorkspaceHome): WorkspaceHome {
   return {
     ...home,
     workspace: {
-      description: "",
       ...home.workspace,
+      description: home.workspace.description ?? "",
     },
     futuresBySimulation: home.futuresBySimulation ?? {},
     timelineBySimulation: home.timelineBySimulation ?? {},

@@ -246,6 +246,16 @@ export class SupabaseWorkspaceRepository {
       }
     }
   }
+
+  async deleteKnowledge(knowledgeId: string): Promise<void> {
+    const { error } = await this.client.from("knowledge").delete().eq("id", knowledgeId);
+    if (error) throw error;
+  }
+
+  async deleteNote(noteId: string): Promise<void> {
+    const { error } = await this.client.from("notes").delete().eq("id", noteId);
+    if (error) throw error;
+  }
 }
 
 function mapWorkspace(row: Record<string, unknown>): WorkspaceRecord {
