@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   deriveFutureHooks,
   deriveNextSteps,
@@ -180,14 +181,38 @@ export function FutureTimelineCards({
             ))}
           </ol>
           {onChoosePath && (
-            <button
-              type="button"
-              disabled={saving || isChosen}
-              onClick={() => void handleChoose()}
-              className="mt-6 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-bg hover:bg-chronos disabled:opacity-50"
-            >
-              {isChosen ? "Path saved to timeline" : saving ? "Saving…" : "Choose this path · Save timeline"}
-            </button>
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled={saving || isChosen}
+                onClick={() => void handleChoose()}
+                className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-bg hover:bg-chronos disabled:opacity-50"
+              >
+                {isChosen
+                  ? "Path saved to timeline"
+                  : saving
+                    ? "Saving…"
+                    : "Choose this path · Save timeline"}
+              </button>
+              {isChosen && (
+                <Link
+                  to="/workspace/memory"
+                  className="rounded-full border border-chronos/40 bg-chronos/10 px-5 py-2.5 text-sm font-medium text-chronos transition hover:bg-chronos/20"
+                >
+                  View in Memory →
+                </Link>
+              )}
+            </div>
+          )}
+          {isChosen && (
+            <p className="mt-3 text-sm text-ink-dim">
+              This decision is now in persistent memory — reopen, compare versions, and log
+              outcomes anytime from{" "}
+              <Link to="/workspace/memory" className="text-chronos hover:underline">
+                Memory
+              </Link>
+              .
+            </p>
           )}
         </div>
       )}

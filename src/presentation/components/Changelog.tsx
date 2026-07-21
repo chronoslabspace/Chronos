@@ -11,6 +11,19 @@ export type Release = {
 
 const releases: Release[] = [
   {
+    version: "4.8.1",
+    date: "2026-07-21",
+    tag: "patch",
+    title: "Memory in nav · honest landing claims",
+    summary:
+      "Memory is a primary nav item with post-decision CTAs on dashboard and after save path. Landing and marketing copy aligned to the real beta: ranked futures, Decision Workspace, dual-write memory, RLS — SDKs/API and cryptographic infra framed as roadmap or demo where appropriate.",
+    highlights: [
+      { label: "Memory nav", detail: "Dashboard · Knowledge · Sims · Timeline · Memory · Settings" },
+      { label: "Post-decision CTA", detail: "View in Memory after path save + dashboard banner for latest saved path" },
+      { label: "Claim audit", detail: "Softened 1,000-futures / SDK-shipped / crypto-isolation language on landing & security pages" },
+    ],
+  },
+  {
     version: "4.8.0",
     date: "2026-07-21",
     tag: "minor",

@@ -8,12 +8,13 @@ import { WorkspaceOnboarding } from "./WorkspaceOnboarding";
 
 type NavItem = { to: string; label: string; short: string; end?: boolean };
 
-/** Primary product nav only — Decision Workspace surface. */
+/** Primary product nav — Memory stays visible after the first decision. */
 const navItems: NavItem[] = [
   { to: "/workspace", label: "Dashboard", short: "Home", end: true },
   { to: "/workspace/knowledge", label: "Knowledge", short: "Know" },
   { to: "/workspace/simulations", label: "Simulations", short: "Sims" },
   { to: "/workspace/timeline", label: "Timeline", short: "Time" },
+  { to: "/workspace/memory", label: "Memory", short: "Mem" },
   { to: "/workspace/settings", label: "Settings", short: "Set" },
 ];
 
@@ -169,14 +170,14 @@ function WorkspaceShellInner() {
           className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/95 backdrop-blur-xl lg:hidden"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
-          <div className="mx-auto grid max-w-6xl grid-cols-5 gap-0 px-1 py-1">
+          <div className="mx-auto grid max-w-6xl grid-cols-6 gap-0 px-0.5 py-1">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
-                  `flex flex-col items-center py-2 font-mono text-[9px] uppercase ${
+                  `flex flex-col items-center py-2 font-mono text-[8px] uppercase tracking-[0.04em] ${
                     isActive ? "text-chronos" : "text-ink-faint"
                   }`
                 }
