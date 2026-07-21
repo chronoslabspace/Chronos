@@ -11,6 +11,61 @@ export type Release = {
 
 const releases: Release[] = [
   {
+    version: "4.7.2",
+    date: "2026-07-21",
+    tag: "patch",
+    title: "Launch readiness: monitoring + decision E2E",
+    summary:
+      "React Error Boundary and optional Sentry (VITE_SENTRY_DSN) so client crashes are visible. Authenticated Playwright covers idea → Decision Report → save path → outcome. Product funnel analytics and full Decision Workspace loop ship together.",
+    highlights: [
+      { label: "Error monitoring", detail: "ErrorBoundary + Sentry scaffold (DSN optional); never blocks UX" },
+      { label: "E2E decision loop", detail: "Playwright: onboard → generate futures → report → choose path → outcome (VITE_E2E_AUTH)" },
+      { label: "Trust + analytics", detail: "Recommended because · funnel counters · docs beta framing" },
+    ],
+  },
+  {
+    version: "4.7.1",
+    date: "2026-07-21",
+    tag: "patch",
+    title: "Trust · analytics · docs",
+    summary:
+      "Every recommendation now leads with transparent “Recommended because” bullets. Product analytics instrument the beta funnel (workspaces, sims, time-to-first-decision, exports, retention). Docs cover what Chronos is, branch → simulate → collapse, beta limits, and FAQ.",
+    highlights: [
+      { label: "Recommended because", detail: "lowest execution risk · fits objective · fewer dependencies · highest expected success" },
+      { label: "Analytics", detail: "workspace_created, simulation_started/completed, path_chosen, report_exported, session/retention — local + Supabase events" },
+      { label: "Docs", detail: "What Chronos is · How it works · Beta limitations · FAQ" },
+      { label: "Settings", detail: "Browser funnel snapshot for time-to-first-decision and usage counters" },
+    ],
+  },
+  {
+    version: "4.7.0",
+    date: "2026-07-21",
+    tag: "minor",
+    title: "Decision Report · dashboard · outcome memory",
+    summary:
+      "Shareable Decision Report (objective, context, alternatives, trade-offs, confidence, path, risks, next actions). Dashboard answers what you’re working on, what’s pending, what ran, and what changed. Persistent goal history + outcome tracking: Did you follow this? How did it turn out?",
+    highlights: [
+      { label: "Decision Report", detail: "Full artifact: objective, context used, alternative futures, trade-offs, confidence, recommended path, risks, next actions — copy/download markdown" },
+      { label: "Dashboard HQ", detail: "Working on · pending decisions · simulations run · activity since last time" },
+      { label: "Persistent memory", detail: "Previous goals, decision history, knowledge, simulations, past outcomes on Memory" },
+      { label: "Outcome tracking", detail: "Yes / Partially / No follow-through, then free-text how it turned out — stored on the sim + notes" },
+    ],
+  },
+  {
+    version: "4.6.1",
+    date: "2026-07-21",
+    tag: "patch",
+    title: "Flawless decision loop · multi-future wow",
+    summary:
+      "Idea → decision in minutes: generate futures lands on the sim detail, comparison leads with exclusive hooks (Fastest path · Lower risk · Highest upside), then Decision Report, then choose path and save to timeline.",
+    highlights: [
+      { label: "Wow comparison", detail: "Future A 92% · Fastest path · B Lower risk · C Highest upside — exclusive trade-off labels" },
+      { label: "Flow order", detail: "Compare outcomes → Decision Report → Choose path · Save timeline (pipeline demoted)" },
+      { label: "Post-run redirect", detail: "runSimulation returns sim id and opens the decision view immediately" },
+      { label: "CTA", detail: "Generate futures (not “here’s an answer”)" },
+    ],
+  },
+  {
     version: "4.6.0",
     date: "2026-07-16",
     tag: "minor",

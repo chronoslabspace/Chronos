@@ -1,4 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import {
+  formatDurationMs,
+  getProductAnalyticsSnapshot,
+} from "../../../infrastructure/analytics/productAnalytics";
 import { useWorkspace } from "./WorkspaceContext";
 
 /** Workspace settings — switch, create, inspect. */
@@ -8,6 +12,7 @@ export function WorkspaceSettingsPage() {
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const analytics = useMemo(() => getProductAnalyticsSnapshot(), [home]);
 
   if (!home) return null;
 
@@ -129,6 +134,30 @@ export function WorkspaceSettingsPage() {
         {(localError || error) && (
           <p className="mt-3 text-sm text-red-400">{localError || error}</p>
         )}
+      </section>
+
+      {/* Local product analytics (beta instrumentation) */}
+      <section className="border border-line p-4 sm:p-5">
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-chronos">
+          Product analytics (this browser)
+        </div>
+        <p className="mt-2 text-sm text-ink-dim">
+          Funnel counters for beta learning — workspace creation, simulations, time
+          to first decision, exports, and return visits. Never blocks the product.
+        </p>
+        <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+          <Row label="Workspaces created" value={String(analytics.workspace_created)} />
+          <Row label="Simulations started" value={String(analytics.simulation_started)} />
+          <Row label="Simulations completed" value={String(analytics.simulation_completed)} />
+          <Row label="Paths chosen" value={String(analytics.path_chosen)} />
+          <Row label="Reports exported" value={String(analytics.report_exported)} />
+          <Row label="Sessions (days)" value={String(analytics.sessions)} />
+          <Row label="Active days" value={String(analytics.retention_days)} />
+          <Row
+            label="Time to first decision"
+            value={formatDurationMs(analytics.time_to_first_decision_ms)}
+          />
+        </dl>
       </section>
     </div>
   );

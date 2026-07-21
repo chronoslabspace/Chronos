@@ -3,16 +3,19 @@ import {
   type SimulationConstraint,
 } from "../simulation/SimulationEngine";
 import { snapshotKnowledgeUsed } from "../../domain/workspace/simulationReport";
+import { archiveGoalIfChanged } from "../../domain/workspace/workspaceMemory";
 import type {
   GoalRecord,
   KnowledgeRecord,
   KnowledgeType,
   NoteRecord,
+  OutcomeFollowed,
   SimulationRecord,
   WorkspaceHome,
   WorkspaceRecord,
 } from "../../domain/workspace/types";
 import { hasLocalMemory, mergeWorkspaceHomes } from "../../domain/workspace/sync";
+import { isE2EAuthEnabled } from "../../infrastructure/auth/e2eAuth";
 import {
   LocalWorkspaceStore,
   localWorkspaceStore,
@@ -69,10 +72,11 @@ export class WorkspaceService {
       this.remote = null;
     } else {
       this.local = options.local ?? localWorkspaceStore;
-      this.remote =
-        options.remote === undefined
-          ? (supabaseWorkspaceRepository as WorkspaceCloudStore)
-          : options.remote;
+      // Playwright E2E uses local-only memory so placeholder Supabase cannot hang the loop.
+      const defaultRemote = isE2EAuthEnabled()
+        ? null
+        : (supabaseWorkspaceRepository as WorkspaceCloudStore);
+      this.remote = options.remote === undefined ? defaultRemote : options.remote;
     }
   }
 
@@ -157,6 +161,7 @@ export class WorkspaceService {
     const home: WorkspaceHome = {
       workspace,
       goal: null,
+      goalHistory: [],
       recentSimulations: [],
       knowledge: [],
       notes: [],
@@ -175,18 +180,28 @@ export class WorkspaceService {
     const home = await this.require(ownerId);
     const trimmed = title.trim();
     if (!trimmed) throw new Error("Goal title is required.");
+    const desc = description.trim();
 
+    const goalHistory = archiveGoalIfChanged(
+      home.goal,
+      trimmed,
+      desc,
+      home.goalHistory ?? []
+    );
+
+    // New objective identity when title changes; keep id when refining same goal.
+    const titleChanged = Boolean(home.goal && home.goal.title !== trimmed);
     const goal: GoalRecord = {
-      id: home.goal?.id ?? uuid(),
+      id: titleChanged || !home.goal ? uuid() : home.goal.id,
       workspace_id: home.workspace.id,
       title: trimmed,
-      description: description.trim(),
+      description: desc,
       status: "active",
       priority,
-      created_at: home.goal?.created_at ?? nowIso(),
+      created_at: titleChanged || !home.goal ? nowIso() : home.goal.created_at,
     };
 
-    return this.persist(ownerId, { ...home, goal });
+    return this.persist(ownerId, { ...home, goal, goalHistory });
   }
 
   async addKnowledge(
@@ -516,6 +531,117 @@ export class WorkspaceService {
     });
   }
 
+  /**
+   * Outcome tracking step 1 — Did you follow this recommendation?
+   * Requires a saved path (chooseBestPath first).
+   */
+  async recordOutcomeFollowed(
+    ownerId: string,
+    simulationId: string,
+    followed: OutcomeFollowed
+  ): Promise<WorkspaceHome> {
+    if (followed !== "yes" && followed !== "partially" && followed !== "no") {
+      throw new Error("Followed must be yes, partially, or no.");
+    }
+    const home = await this.require(ownerId);
+    const sim = home.recentSimulations.find((s) => s.id === simulationId);
+    if (!sim) throw new Error("Simulation not found.");
+    if (!sim.result.chosen_future_id) {
+      throw new Error("Choose a path before recording outcome follow-through.");
+    }
+
+    const at = nowIso();
+    const updatedSim: SimulationRecord = {
+      ...sim,
+      result: {
+        ...sim.result,
+        outcome_followed: followed,
+        outcome_followed_at: at,
+      },
+    };
+
+    const note: NoteRecord = {
+      id: uuid(),
+      workspace_id: home.workspace.id,
+      title: `Outcome follow-through: ${followed}`,
+      content: [
+        `# Did you follow this recommendation?`,
+        ``,
+        `**Answer:** ${followed}`,
+        `**Simulation:** ${sim.title} (v${sim.version})`,
+        `**Path:** ${String(sim.result.chosen_future_name ?? "—")}`,
+        ``,
+        `Recorded ${at}`,
+      ].join("\n"),
+      created_at: at,
+    };
+
+    return this.persist(ownerId, {
+      ...home,
+      recentSimulations: home.recentSimulations.map((s) =>
+        s.id === simulationId ? updatedSim : s
+      ),
+      notes: [note, ...home.notes],
+    });
+  }
+
+  /**
+   * Outcome tracking step 2 — How did it turn out?
+   */
+  async recordOutcomeResult(
+    ownerId: string,
+    simulationId: string,
+    resultNote: string
+  ): Promise<WorkspaceHome> {
+    const text = resultNote.trim();
+    if (!text) throw new Error("Describe how it turned out.");
+    const home = await this.require(ownerId);
+    const sim = home.recentSimulations.find((s) => s.id === simulationId);
+    if (!sim) throw new Error("Simulation not found.");
+    if (!sim.result.chosen_future_id) {
+      throw new Error("Choose a path before recording how it turned out.");
+    }
+    if (!sim.result.outcome_followed) {
+      throw new Error("Record whether you followed the recommendation first.");
+    }
+
+    const at = nowIso();
+    const updatedSim: SimulationRecord = {
+      ...sim,
+      result: {
+        ...sim.result,
+        outcome_result: text,
+        outcome_result_at: at,
+      },
+    };
+
+    const note: NoteRecord = {
+      id: uuid(),
+      workspace_id: home.workspace.id,
+      title: `Outcome: ${sim.title}`,
+      content: [
+        `# How did it turn out?`,
+        ``,
+        `**Simulation:** ${sim.title} (v${sim.version})`,
+        `**Path:** ${String(sim.result.chosen_future_name ?? "—")}`,
+        `**Followed:** ${String(sim.result.outcome_followed)}`,
+        ``,
+        text,
+        ``,
+        `Recorded ${at}`,
+      ].join("\n"),
+      created_at: at,
+    };
+
+    return this.persist(ownerId, {
+      ...home,
+      recentSimulations: home.recentSimulations.map((s) =>
+        s.id === simulationId ? updatedSim : s
+      ),
+      notes: [note, ...home.notes],
+    });
+  }
+
   private parseConstraints(lines: string[]): SimulationConstraint[] {
     return lines
       .map((line) => line.trim())
@@ -552,13 +678,16 @@ export class WorkspaceService {
   private normalize(home: WorkspaceHome): WorkspaceHome {
     return {
       ...home,
+      goalHistory: home.goalHistory ?? [],
+      knowledge: home.knowledge ?? [],
+      notes: home.notes ?? [],
       futuresBySimulation: home.futuresBySimulation ?? {},
       timelineBySimulation: home.timelineBySimulation ?? {},
       workspace: {
         ...home.workspace,
         description: home.workspace.description ?? "",
       },
-      recentSimulations: home.recentSimulations.map((sim) => ({
+      recentSimulations: (home.recentSimulations ?? []).map((sim) => ({
         ...sim,
         version: sim.version ?? 1,
         lineage_id: sim.lineage_id || sim.id,

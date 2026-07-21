@@ -87,6 +87,13 @@ export function countOpenTasks(
     if (latest.status === "running" || latest.status === "queued") open += 1;
     if (latest.status === "failed") open += 1;
     if (latest.status === "completed" && !latest.result.chosen_future_id) open += 1;
+    if (
+      latest.status === "completed" &&
+      latest.result.chosen_future_id &&
+      !latest.result.outcome_followed
+    ) {
+      open += 1;
+    }
 
     const tasks = Array.isArray(latest.result.tasks) ? latest.result.tasks : [];
     open += tasks.filter((t) => t.status === "pending" || t.status === "running").length;
@@ -180,6 +187,22 @@ function buildRecommendation(
       text: `Compare futures and choose a path (engine suggests “${best}”).`,
       href: `/workspace/simulations/${latest.id}`,
     };
+  }
+
+  // Outcome tracking — path saved, follow-through not logged
+  if (latest.status === "completed" && latest.result.chosen_future_id) {
+    if (!latest.result.outcome_followed) {
+      return {
+        text: "Did you follow this recommendation? Log Yes / Partially / No.",
+        href: `/workspace/simulations/${latest.id}`,
+      };
+    }
+    if (!latest.result.outcome_result) {
+      return {
+        text: "How did it turn out? Capture the outcome for persistent memory.",
+        href: `/workspace/simulations/${latest.id}`,
+      };
+    }
   }
 
   if (home.recentSimulations.length < 2) {

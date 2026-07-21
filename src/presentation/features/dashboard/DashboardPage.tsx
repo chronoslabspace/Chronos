@@ -1,16 +1,24 @@
 import { useMemo } from "react";
 import { buildDecisionReport } from "../../../domain/workspace/decisionReport";
+import {
+  buildActivityFeed,
+  listPendingDecisions,
+} from "../../../domain/workspace/workspaceMemory";
 import { useWorkspace } from "../workspace/WorkspaceContext";
 import { DecisionReportCard } from "../simulation/components/DecisionReportCard";
+import { ActivityFeed } from "./components/ActivityFeed";
 import { GoalCard } from "./components/GoalCard";
 import { KnowledgeSummary } from "./components/KnowledgeSummary";
-import { LatestSimulationCard } from "./components/LatestSimulationCard";
 import { MvpProgress } from "./components/MvpProgress";
+import { PendingDecisions } from "./components/PendingDecisions";
 import { RecentSimulations } from "./components/RecentSimulations";
 import { TimelinePreview } from "./components/TimelinePreview";
 import { WorkspacePulse } from "./components/WorkspacePulse";
 
-/** Decision Workspace HQ — pulse, decision report, connected cards. */
+/**
+ * Decision Workspace HQ.
+ * Answers: What am I working on? Pending decisions? Sims run? What changed?
+ */
 export function DashboardPage() {
   const { home } = useWorkspace();
   if (!home?.goal) return null;
@@ -24,22 +32,26 @@ export function DashboardPage() {
     return buildDecisionReport(home, latest, futures);
   }, [home, latest, futures]);
 
+  const pending = useMemo(() => listPendingDecisions(home), [home]);
+  const activity = useMemo(() => buildActivityFeed(home, 8), [home]);
+
   return (
     <div className="mx-auto max-w-3xl space-y-5 lg:max-w-none">
       <header className="border-b border-line pb-5">
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint">
-          What am I working on?
+          Decision workspace
         </div>
         <p className="mt-2 text-sm text-ink-dim">
           <span className="text-ink">{home.workspace.name}</span>
           <span className="mx-2 text-ink-faint">·</span>
-          {decisionReport
-            ? "Latest Decision Report below — the artifact you’ll screenshot."
-            : "Run a simulation to get a Decision Report."}
+          Working on, pending decisions, simulations, and what changed — at a glance.
         </p>
       </header>
 
       <WorkspacePulse home={home} />
+
+      {/* 1 · What am I working on? */}
+      <GoalCard goal={home.goal} confidence={goalConfidence} />
 
       {decisionReport && latest && (
         <DecisionReportCard
@@ -49,15 +61,21 @@ export function DashboardPage() {
         />
       )}
 
-      <GoalCard goal={home.goal} confidence={goalConfidence} />
-      <LatestSimulationCard simulation={latest} />
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        {/* 2 · What decisions are pending? */}
+        <PendingDecisions pending={pending} />
+        {/* 4 · What changed since last time? */}
+        <ActivityFeed items={activity} />
+      </div>
+
+      {/* 3 · What simulations have I run? */}
+      <RecentSimulations simulations={home.recentSimulations} />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <KnowledgeSummary knowledge={home.knowledge} notes={home.notes} />
         <TimelinePreview latest={latest} futures={futures} />
       </div>
 
-      <RecentSimulations simulations={home.recentSimulations} />
       <MvpProgress home={home} />
     </div>
   );

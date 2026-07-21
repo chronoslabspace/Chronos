@@ -9,9 +9,11 @@ import {
 import { workspaceService } from "../../../application/workspace/WorkspaceService";
 import type {
   KnowledgeType,
+  OutcomeFollowed,
   WorkspaceHome,
   WorkspaceRecord,
 } from "../../../domain/workspace/types";
+import { trackProductEvent } from "../../../infrastructure/analytics/productAnalytics";
 import { authService } from "../../../infrastructure/auth/SupabaseAuthService";
 
 type WorkspaceContextValue = {
@@ -41,9 +43,15 @@ type WorkspaceContextValue = {
   deleteKnowledge: (knowledgeId: string) => Promise<void>;
   addNote: (title: string, content: string) => Promise<void>;
   deleteNote: (noteId: string) => Promise<void>;
-  runSimulation: (objective: string, constraints?: string[]) => Promise<void>;
+  /** Returns the new simulation id so the UI can open Compare → Report → Save. */
+  runSimulation: (objective: string, constraints?: string[]) => Promise<string | null>;
   rerunSimulation: (parentSimulationId: string, constraints?: string[]) => Promise<string | null>;
   chooseBestPath: (simulationId: string, futureId: string) => Promise<void>;
+  recordOutcomeFollowed: (
+    simulationId: string,
+    followed: OutcomeFollowed
+  ) => Promise<void>;
+  recordOutcomeResult: (simulationId: string, resultNote: string) => Promise<void>;
   refresh: () => Promise<void>;
 };
 
@@ -89,6 +97,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   }, [resolveOwnerId]);
 
   useEffect(() => {
+    trackProductEvent("session_start");
     void refresh();
     const { data } = authService.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT" || !session) {
@@ -98,6 +107,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         return;
       }
+      trackProductEvent("session_start", { authEvent: event });
       void refresh();
     });
     return () => data.subscription.unsubscribe();
@@ -136,7 +146,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       error,
       refresh,
       createWorkspace: async (name, description) => {
-        await withOwner((id) => workspaceService.createWorkspace(id, name, description ?? ""));
+        const next = await withOwner((id) =>
+          workspaceService.createWorkspace(id, name, description ?? "")
+        );
+        trackProductEvent("workspace_created", {
+          workspaceId: next.workspace.id,
+          name: next.workspace.name,
+        });
       },
       switchWorkspace: async (workspaceId) => {
         const id = ownerId ?? (await resolveOwnerId());
@@ -152,6 +168,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           const next = await workspaceService.switchWorkspace(id, workspaceId);
           setHome(next);
           setWorkspaces(await workspaceService.listWorkspaces(id));
+          trackProductEvent("workspace_opened", { workspaceId });
         } catch (err) {
           setError((err as Error).message);
           throw err;
@@ -161,9 +178,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       },
       setGoal: async (title, description) => {
         await withOwner((id) => workspaceService.setGoal(id, title, description ?? ""));
+        trackProductEvent("goal_set", { titleLength: title.trim().length });
       },
       addKnowledge: async (input) => {
         await withOwner((id) => workspaceService.addKnowledge(id, input));
+        trackProductEvent("knowledge_added", { type: input.type });
       },
       updateKnowledge: async (knowledgeId, patch) => {
         await withOwner((id) => workspaceService.updateKnowledge(id, knowledgeId, patch));
@@ -173,21 +192,61 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       },
       addNote: async (title, content) => {
         await withOwner((id) => workspaceService.addNote(id, title, content));
+        trackProductEvent("knowledge_added", { type: "note" });
       },
       deleteNote: async (noteId) => {
         await withOwner((id) => workspaceService.deleteNote(id, noteId));
       },
       runSimulation: async (objective, constraints = []) => {
-        await withOwner((id) => workspaceService.runSimulation(id, objective, constraints));
+        trackProductEvent("simulation_started", {
+          objectiveLength: objective.trim().length,
+          constraintCount: constraints.length,
+        });
+        const next = await withOwner((id) =>
+          workspaceService.runSimulation(id, objective, constraints)
+        );
+        const sim = next.recentSimulations[0];
+        trackProductEvent("simulation_completed", {
+          simulationId: sim?.id,
+          status: sim?.status,
+          futures: sim?.result?.futures_count,
+        });
+        return sim?.id ?? null;
       },
       rerunSimulation: async (parentSimulationId, constraints) => {
+        trackProductEvent("simulation_started", {
+          parentSimulationId,
+          rerun: true,
+        });
         const next = await withOwner((id) =>
           workspaceService.rerunSimulation(id, parentSimulationId, constraints)
         );
-        return next.recentSimulations[0]?.id ?? null;
+        const sim = next.recentSimulations[0];
+        trackProductEvent("simulation_completed", {
+          simulationId: sim?.id,
+          status: sim?.status,
+          rerun: true,
+        });
+        return sim?.id ?? null;
       },
       chooseBestPath: async (simulationId, futureId) => {
         await withOwner((id) => workspaceService.chooseBestPath(id, simulationId, futureId));
+        trackProductEvent("path_chosen", { simulationId, futureId });
+      },
+      recordOutcomeFollowed: async (simulationId, followed) => {
+        await withOwner((id) =>
+          workspaceService.recordOutcomeFollowed(id, simulationId, followed)
+        );
+        trackProductEvent("outcome_followed", { simulationId, followed });
+      },
+      recordOutcomeResult: async (simulationId, resultNote) => {
+        await withOwner((id) =>
+          workspaceService.recordOutcomeResult(id, simulationId, resultNote)
+        );
+        trackProductEvent("outcome_result", {
+          simulationId,
+          noteLength: resultNote.trim().length,
+        });
       },
     }),
     [ownerId, home, workspaces, loading, error, refresh, withOwner, resolveOwnerId]
