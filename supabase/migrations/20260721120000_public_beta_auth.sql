@@ -237,11 +237,22 @@ create table if not exists public.events (
   id uuid primary key default gen_random_uuid(),
   event text not null,
   properties jsonb not null default '{}'::jsonb,
-  user_id uuid references auth.users (id) on delete set null,
   user_agent text,
   path text,
   created_at timestamptz not null default now()
 );
+
+-- Additive column for authenticated analytics (existing table may lack it)
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'events' and column_name = 'user_id'
+  ) then
+    alter table public.events
+      add column user_id uuid references auth.users (id) on delete set null;
+  end if;
+end $$;
 
 create index if not exists events_event_created_at_idx
   on public.events (event, created_at desc);
@@ -258,4 +269,4 @@ drop policy if exists "Users read own events" on public.events;
 create policy "Users read own events"
   on public.events for select
   to authenticated
-  using (user_id = auth.uid() or user_id is null);
+  using (user_id is null or user_id = auth.uid());
