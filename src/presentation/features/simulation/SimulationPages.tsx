@@ -10,6 +10,7 @@ import { FutureTimelineCards } from "../timeline/FutureTimelineCards";
 import { useWorkspace } from "../workspace/WorkspaceContext";
 import { DecisionReportCard } from "./components/DecisionReportCard";
 import { FutureComparison } from "./components/FutureComparison";
+import { OutcomeTracking } from "./components/OutcomeTracking";
 
 export function SimulationsPage() {
   const { home, runSimulation, error } = useWorkspace();
@@ -52,7 +53,7 @@ export function SimulationsPage() {
           </div>
           <h1 className="mt-2 font-serif text-3xl text-ink">Simulations</h1>
           <p className="mt-2 max-w-xl text-sm text-ink-dim">
-            Generate multiple futures, evaluate trade-offs, and get a ranked recommendation.
+            Generate multiple futures, compare trade-offs, get a decision report — then save the path.
           </p>
         </div>
         {!isNew && (
@@ -80,6 +81,7 @@ export function SimulationsPage() {
           <Field label="What should Chronos decide?">
             <input
               required
+              aria-label="What should Chronos decide?"
               value={objective}
               onChange={(e) => setObjective(e.target.value)}
               placeholder="e.g. How should we launch with a small team and limited runway?"
@@ -130,7 +132,7 @@ export function SimulationsPage() {
               disabled={busy}
               className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-bg transition hover:bg-chronos disabled:opacity-50"
             >
-              {busy ? "Running…" : "Run simulation"}
+              {busy ? "Generating futures…" : "Generate futures"}
             </button>
             {hasRuns && (
               <button
@@ -190,7 +192,13 @@ export function SimulationsPage() {
 }
 
 export function SimulationDetailPage() {
-  const { home, rerunSimulation, chooseBestPath } = useWorkspace();
+  const {
+    home,
+    rerunSimulation,
+    chooseBestPath,
+    recordOutcomeFollowed,
+    recordOutcomeResult,
+  } = useWorkspace();
   const { simulationId } = useParams();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -252,6 +260,9 @@ export function SimulationDetailPage() {
           Simulation · {home.workspace.name}
         </div>
         <h1 className="mt-2 font-serif text-3xl text-ink">{sim.title}</h1>
+        <p className="mt-2 max-w-2xl text-sm text-ink-dim">
+          Compare futures → read the decision report → choose a path and save it to the timeline.
+        </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <StatusPill status={sim.status} />
           <span className="rounded-full bg-chronos/15 px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-chronos">
@@ -263,7 +274,6 @@ export function SimulationDetailPage() {
           <span className="text-sm text-ink-dim">{formatCreatedAt(sim.created_at)}</span>
         </div>
 
-        {/* Memory actions */}
         <div className="mt-5 flex flex-wrap gap-2">
           <button
             type="button"
@@ -298,7 +308,6 @@ export function SimulationDetailPage() {
           </p>
         )}
 
-        {/* Version strip */}
         {versions.length > 0 && (
           <ol className="mt-5 flex flex-wrap gap-2">
             {versions.map((v) => (
@@ -319,12 +328,53 @@ export function SimulationDetailPage() {
         )}
       </div>
 
-      {/* Pipeline tasks */}
-      <section>
-        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint">
-          Engine pipeline
-        </div>
-        <ol className="mt-4 space-y-2">
+      {/* 1 · Compare outcomes — the Chronos wow moment */}
+      <FutureComparison
+        futures={futures}
+        chosenFutureId={chosenId}
+        selectedId={activeFutureId}
+        onSelect={setSelectedFutureId}
+      />
+
+      {/* 2 · Decision report (shareable artifact) */}
+      {decisionReport && (
+        <DecisionReportCard
+          report={decisionReport}
+          outcomeSlot={
+            <OutcomeTracking
+              pathSaved={Boolean(chosenId)}
+              followed={decisionReport.outcomeFollowed}
+              followedAt={decisionReport.outcomeFollowedAt}
+              result={decisionReport.outcomeResult}
+              resultAt={decisionReport.outcomeResultAt}
+              recommendedName={decisionReport.recommended}
+              onFollowed={(followed) => recordOutcomeFollowed(sim.id, followed)}
+              onResult={(note) => recordOutcomeResult(sim.id, note)}
+            />
+          }
+        />
+      )}
+
+      {/* 3 · Choose path · Save timeline */}
+      <FutureTimelineCards
+        goalTitle={home.goal?.title ?? sim.title}
+        futures={futures}
+        simulationRisks={risks}
+        chosenFutureId={chosenId}
+        selectedId={activeFutureId}
+        onSelect={setSelectedFutureId}
+        onChoosePath={async (futureId) => {
+          await chooseBestPath(sim.id, futureId);
+          setSelectedFutureId(futureId);
+        }}
+      />
+
+      {/* Engine pipeline — secondary detail after the decision loop */}
+      <details className="rounded-2xl border border-line">
+        <summary className="cursor-pointer list-none px-4 py-3 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint marker:content-none [&::-webkit-details-marker]:hidden">
+          Engine pipeline · {tasks.length || 5} steps
+        </summary>
+        <ol className="space-y-2 border-t border-line px-4 py-4">
           {(tasks.length
             ? tasks
             : [
@@ -349,27 +399,7 @@ export function SimulationDetailPage() {
             </li>
           ))}
         </ol>
-      </section>
-
-      {decisionReport && <DecisionReportCard report={decisionReport} />}
-
-      <FutureComparison
-        futures={futures}
-        chosenFutureId={chosenId}
-        selectedId={activeFutureId}
-        onSelect={setSelectedFutureId}
-      />
-
-      <FutureTimelineCards
-        goalTitle={home.goal?.title ?? sim.title}
-        futures={futures}
-        simulationRisks={risks}
-        chosenFutureId={chosenId}
-        onChoosePath={async (futureId) => {
-          await chooseBestPath(sim.id, futureId);
-          setSelectedFutureId(futureId);
-        }}
-      />
+      </details>
 
       <Back to="/workspace/simulations" label="All simulations" />
     </div>

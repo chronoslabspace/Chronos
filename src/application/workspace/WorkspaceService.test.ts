@@ -132,6 +132,34 @@ describe("WorkspaceService success metric", () => {
     home = await service.deleteKnowledge(ownerId, kid);
     expect(home.knowledge.find((k) => k.id === kid)).toBeUndefined();
   });
+
+  it("archives previous goals and tracks outcomes after a chosen path", async () => {
+    await service.createWorkspace(ownerId, "Outcome Lab");
+    let home = await service.setGoal(ownerId, "First objective");
+    home = await service.setGoal(ownerId, "Second objective");
+    expect(home.goal?.title).toBe("Second objective");
+    expect(home.goalHistory.some((g) => g.title === "First objective")).toBe(true);
+
+    home = await service.addNote(ownerId, "Context", "evidence");
+    home = await service.runSimulation(ownerId, "Which path?");
+    const sim = home.recentSimulations[0];
+    const future = home.futuresBySimulation[sim.id][0];
+
+    home = await service.chooseBestPath(ownerId, sim.id, future.id);
+    expect(home.recentSimulations[0].result.chosen_future_id).toBe(future.id);
+
+    home = await service.recordOutcomeFollowed(ownerId, sim.id, "partially");
+    expect(home.recentSimulations[0].result.outcome_followed).toBe("partially");
+    expect(home.recentSimulations[0].result.outcome_followed_at).toBeTruthy();
+
+    home = await service.recordOutcomeResult(ownerId, sim.id, "Shipped late but worked.");
+    expect(home.recentSimulations[0].result.outcome_result).toMatch(/Shipped late/);
+
+    const resumed = await new WorkspaceService({ local: store, remote: null }).load(ownerId);
+    expect(resumed?.goalHistory[0]?.title).toBe("First objective");
+    expect(resumed?.recentSimulations[0].result.outcome_followed).toBe("partially");
+    expect(resumed?.recentSimulations[0].result.outcome_result).toMatch(/Shipped late/);
+  });
 });
 
 

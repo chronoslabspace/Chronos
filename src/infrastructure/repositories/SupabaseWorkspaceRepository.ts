@@ -118,6 +118,7 @@ export class SupabaseWorkspaceRepository {
     return {
       workspace,
       goal: goalRes.data?.[0] ? mapGoal(goalRes.data[0]) : null,
+      goalHistory: [],
       recentSimulations: simulations,
       knowledge: (knowledgeRes.data ?? []).map(mapKnowledge),
       notes: (notesRes.data ?? []).map(mapNote),

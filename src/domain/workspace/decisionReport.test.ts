@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildDecisionReport,
+  deriveRecommendedBecause,
   deriveWhyReasons,
   exportDecisionReportMarkdown,
 } from "./decisionReport";
@@ -27,6 +28,7 @@ function homeWithSim(
       priority: 1,
       created_at: "2026-01-01T00:00:00.000Z",
     },
+    goalHistory: [],
     recentSimulations: [sim],
     knowledge: [
       {
@@ -88,12 +90,43 @@ describe("decisionReport", () => {
 
     const report = buildDecisionReport(homeWithSim(sim, futures), sim, futures);
     expect(report.decisionTitle).toBe("Launch CLAB");
+    expect(report.objective).toBe("Launch CLAB");
     expect(report.recommended).toBe("Private Beta First");
     expect(report.confidence).toBeCloseTo(0.88);
     expect(report.why.length).toBeGreaterThan(0);
     expect(report.risks).toContain("Runway pressure");
     expect(report.nextActions.length).toBeGreaterThan(0);
     expect(report.chosenFutureId).toBeNull();
+    expect(report.alternatives.length).toBe(2);
+    expect(report.tradeoffs.length).toBe(2);
+    expect(report.contextUsed.some((c) => c.title === "Brief")).toBe(true);
+    expect(report.recommendedBecause.length).toBeGreaterThan(0);
+    expect(
+      report.recommendedBecause.some((r) =>
+        /risk|objective|success|confidence|dependencies|grounded/i.test(r)
+      )
+    ).toBe(true);
+  });
+
+  it("deriveRecommendedBecause prefers transparent trust bullets", () => {
+    const sim: SimulationRecord = {
+      id: "s1",
+      workspace_id: "w1",
+      goal_id: "g1",
+      title: "Raise first?",
+      status: "completed",
+      confidence: 0.88,
+      result: {},
+      created_at: "2026-01-03T00:00:00.000Z",
+      version: 1,
+      lineage_id: "L1",
+      parent_simulation_id: null,
+    };
+    const home = homeWithSim(sim, futures);
+    const bullets = deriveRecommendedBecause(futures[0], futures, home.goal, sim, home);
+    expect(bullets.some((b) => /lowest execution risk/i.test(b))).toBe(true);
+    expect(bullets.some((b) => /fits your stated objective/i.test(b))).toBe(true);
+    expect(bullets.some((b) => /highest expected success/i.test(b))).toBe(true);
   });
 
   it("prefers user-chosen path when present", () => {
@@ -147,7 +180,13 @@ describe("decisionReport", () => {
     const report = buildDecisionReport(home, sim, futures);
     const md = exportDecisionReportMarkdown(report);
     expect(md).toContain("# Decision Report");
-    expect(md).toContain("## Why");
+    expect(md).toContain("## Recommended because");
+    expect(md).toContain("## Objective");
+    expect(md).toContain("## Context used");
+    expect(md).toContain("## Alternative futures");
+    expect(md).toContain("## Trade-offs");
+    expect(md).toContain("## Recommended path");
+    expect(md).toContain("## Why (detail)");
     expect(md).toContain("## Risks");
     expect(md).toContain("## Next actions");
     expect(md).toContain(report.recommended);

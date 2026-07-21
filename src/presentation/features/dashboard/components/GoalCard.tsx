@@ -15,7 +15,7 @@ export function GoalCard({ goal, confidence }: Props) {
           to="/workspace/simulations?new=1"
           className="font-mono text-[10px] uppercase tracking-[0.16em] text-chronos"
         >
-          Run Simulation →
+          Generate futures →
         </Link>
       </div>
       <h1 className="mt-3 font-serif text-2xl text-ink sm:text-3xl">{goal.title}</h1>
@@ -35,7 +35,7 @@ export function GoalCard({ goal, confidence }: Props) {
           to="/workspace/simulations?new=1"
           className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-bg hover:bg-chronos"
         >
-          Run Simulation
+          Generate futures
         </Link>
         <Link
           to="/workspace/timeline"
