@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { isWorkspaceOnboarded } from "../../../domain/workspace/onboarding";
 import { authService } from "../../../infrastructure/auth/SupabaseAuthService";
 import { ChronosCMark } from "../../components/ChronosCMark";
@@ -28,12 +28,14 @@ export function WorkspaceShell() {
 
 function WorkspaceShellInner() {
   const navigate = useNavigate();
-  const { home, loading, ownerId } = useWorkspace();
+  const location = useLocation();
+  const { home, loading, ownerId, error } = useWorkspace();
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
 
   const ready = isWorkspaceOnboarded(home);
   const initials = (ownerId ?? "You").slice(0, 2).toUpperCase();
+  const routeKey = location.pathname;
 
   const handleSignOut = async () => {
     await authService.signOut();
@@ -101,7 +103,10 @@ function WorkspaceShellInner() {
         </div>
 
         {ready && menuOpen && (
-          <nav className="border-t border-line bg-bg lg:hidden" aria-label="Menu">
+          <nav
+            className="workspace-drawer-enter border-t border-line bg-bg lg:hidden"
+            aria-label="Menu"
+          >
             <div className="mx-auto flex max-w-6xl flex-col gap-0.5 px-3 py-2">
               {navItems.map((item) => (
                 <NavLink
@@ -110,7 +115,9 @@ function WorkspaceShellInner() {
                   end={item.end}
                   onClick={() => setMenuOpen(false)}
                   className={({ isActive }) =>
-                    `rounded-md px-3 py-3 text-[15px] ${isActive ? "bg-chronos/15 text-chronos" : "text-ink-dim"}`
+                    `rounded-md px-3 py-3 text-[15px] transition ${
+                      isActive ? "bg-chronos/15 text-chronos" : "text-ink-dim hover:bg-bg-soft/40 hover:text-ink"
+                    }`
                   }
                 >
                   {item.label}
@@ -134,8 +141,10 @@ function WorkspaceShellInner() {
                   to={item.to}
                   end={item.end}
                   className={({ isActive }) =>
-                    `rounded-lg px-3 py-2.5 text-[14px] ${
-                      isActive ? "bg-chronos/15 font-medium text-chronos" : "text-ink-dim hover:text-ink"
+                    `workspace-nav-active rounded-lg px-3 py-2.5 text-[14px] transition ${
+                      isActive
+                        ? "bg-chronos/15 font-medium text-chronos"
+                        : "text-ink-dim hover:bg-bg-soft/30 hover:text-ink"
                     }`
                   }
                 >
@@ -153,14 +162,23 @@ function WorkspaceShellInner() {
         )}
 
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-5 sm:py-8 lg:px-8">
+          {error && (
+            <div className="workspace-banner-enter mb-4 rounded-xl border border-rose-400/30 bg-rose-400/10 px-4 py-3 text-[13px] text-ink-dim">
+              {error}
+            </div>
+          )}
           {loading ? (
-            <div className="flex min-h-[40vh] items-center justify-center">
+            <div className="page-enter flex min-h-[40vh] items-center justify-center">
               <div className="h-6 w-6 animate-spin rounded-full border border-chronos border-t-transparent" />
             </div>
           ) : !ready ? (
-            <WorkspaceOnboarding />
+            <div key="onboarding" className="page-enter">
+              <WorkspaceOnboarding />
+            </div>
           ) : (
-            <Outlet />
+            <div key={routeKey} className="page-enter">
+              <Outlet />
+            </div>
           )}
         </main>
       </div>
@@ -177,8 +195,8 @@ function WorkspaceShellInner() {
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
-                  `flex flex-col items-center py-2 font-mono text-[8px] uppercase tracking-[0.04em] ${
-                    isActive ? "text-chronos" : "text-ink-faint"
+                  `workspace-nav-active flex flex-col items-center rounded-lg py-2 font-mono text-[8px] uppercase tracking-[0.04em] transition ${
+                    isActive ? "bg-chronos/10 text-chronos" : "text-ink-faint hover:text-ink-dim"
                   }`
                 }
               >

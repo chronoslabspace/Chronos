@@ -1,5 +1,6 @@
 import { PageHeader } from "./PageHeader";
-import { useAccessModal } from "../features/access/AccessModal";
+import { ScrollReveal } from "./ScrollReveal";
+import { useSignUpModal } from "../features/access/SignUpModal";
 
 type FaqItem = {
   question: string;
@@ -63,7 +64,7 @@ const faqs: FaqItem[] = [
   {
     question: "Is Chronos available today?",
     answer:
-      "Chronos is in private beta. The core idea → decision loop works; see Docs → Beta limitations for current edges.",
+      "Chronos is in public beta. The core idea → decision loop works; see Docs → Beta limitations for current edges.",
   },
   {
     question: "What is CLAB?",
@@ -78,7 +79,7 @@ const faqs: FaqItem[] = [
 ];
 
 export function FaqPage() {
-  const { openAccessModal } = useAccessModal();
+  const { openSignUpModal } = useSignUpModal();
 
   return (
     <>
@@ -97,7 +98,7 @@ export function FaqPage() {
 
       <section className="relative pb-24 lg:pb-32">
         <div className="mx-auto max-w-3xl px-6 lg:px-10">
-          <div className="divide-y divide-line rounded-2xl border border-line bg-bg-soft">
+          <ScrollReveal variant="fade" className="divide-y divide-line rounded-2xl border border-line bg-bg-soft">
             {faqs.map((item, i) => (
               <details key={item.question} className="group faq-item">
                 <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-5 transition hover:bg-bg/40 sm:px-6 sm:py-6 [&::-webkit-details-marker]:hidden">
@@ -134,34 +135,36 @@ export function FaqPage() {
                 </div>
               </details>
             ))}
-          </div>
+          </ScrollReveal>
 
-          <div className="mt-10 rounded-xl border border-line bg-bg-soft p-6">
-            <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.25em] text-chronos">
-              Still curious?
+          <ScrollReveal delay={120} variant="up" className="mt-10">
+            <div className="rounded-xl border border-line bg-bg-soft p-6">
+              <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.25em] text-chronos">
+                Still curious?
+              </div>
+              <p className="text-[15px] leading-[1.65] text-ink-dim">
+                Chronos is in public beta. Create an account and explore simulations in your own
+                workspace.
+              </p>
+              <button
+                type="button"
+                onClick={openSignUpModal}
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-bg transition hover:bg-chronos"
+              >
+                Join public beta
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path
+                    d="M2 6h8M6 2l4 4-4 4"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
             </div>
-            <p className="text-[15px] leading-[1.65] text-ink-dim">
-              Chronos is in private beta. Request access to explore simulations in your own
-              workspace.
-            </p>
-            <button
-              type="button"
-              onClick={openAccessModal}
-              className="mt-4 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-bg transition hover:bg-chronos"
-            >
-              Request access
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path
-                  d="M2 6h8M6 2l4 4-4 4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
     </>

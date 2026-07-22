@@ -1,7 +1,7 @@
-import { useAccessModal } from "../features/access/AccessModal";
+import { useSignUpModal } from "../features/access/SignUpModal";
 
 export function CTA() {
-  const { openAccessModal } = useAccessModal();
+  const { openSignUpModal } = useSignUpModal();
   return (
     <section className="relative py-24 lg:py-32">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -10,7 +10,9 @@ export function CTA() {
       <div className="relative mx-auto max-w-2xl px-6 lg:px-10">
         <div className="mb-8 flex items-center justify-center gap-3">
           <div className="h-px w-8 bg-chronos/60" />
-          <span className="font-mono text-[11px] uppercase tracking-[0.25em] text-chronos">Cohort 04 · limited</span>
+          <span className="font-mono text-[11px] uppercase tracking-[0.25em] text-chronos">
+            Public beta · open
+          </span>
           <div className="h-px w-8 bg-chronos/60" />
         </div>
         <h2 className="font-serif text-center text-[clamp(2rem,5.5vw,4.5rem)] leading-[0.98] tracking-tight">
@@ -19,14 +21,15 @@ export function CTA() {
           <span className="gradient-text italic">before you ship it.</span>
         </h2>
         <p className="mx-auto mt-8 max-w-xl text-center text-[15px] leading-[1.75] text-ink-dim">
-          Tell us what you are building. We use the context to shape access and support for your temporal decision workload.
+          Join the public beta and open a Decision Workspace — simulate futures, rank trade-offs,
+          and keep the path in memory.
         </p>
         <button
           type="button"
-          onClick={openAccessModal}
+          onClick={openSignUpModal}
           className="group mx-auto mt-10 inline-flex items-center gap-3 rounded-full bg-ink px-7 py-4 text-sm font-medium text-bg transition hover:bg-chronos"
         >
-          Request workspace access
+          Join public beta
           <svg width="14" height="14" viewBox="0 0 14 14" className="transition group-hover:translate-x-0.5"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
       </div>

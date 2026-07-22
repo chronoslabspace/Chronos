@@ -42,6 +42,15 @@ export class SupabaseAuthService {
     return this.client.auth.signInWithPassword({ email, password });
   }
 
+  /** Public beta email signup — creates account; may require email confirm depending on project settings. */
+  async signUpWithPassword(email: string, password: string, redirectTo?: string) {
+    return this.client.auth.signUp({
+      email,
+      password,
+      options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
+    });
+  }
+
   /**
    * Public beta OAuth — Google / GitHub.
    * Redirect URLs must include {origin}/auth/callback in Supabase Auth settings.

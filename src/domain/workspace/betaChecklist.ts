@@ -92,8 +92,8 @@ export function evaluateBetaChecklist(
     {
       id: "share",
       label: "Share workspace",
-      detail: "Invite a teammate or copy a share link (beta).",
-      optional: false,
+      detail: "Copy a public-beta share note for a teammate (full invites later).",
+      optional: true,
       done: prefs.shareAcknowledged,
       href: "/workspace/settings",
       cta: prefs.shareAcknowledged ? "Settings" : "Share",

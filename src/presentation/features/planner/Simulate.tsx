@@ -8,7 +8,8 @@ import {
   publicStartupSimulator,
 } from "../../../application/planner/publicStartupSimulator";
 import { StartupLaunchPlanner } from "../../../application/planner/StartupLaunchPlanner";
-import { useAccessModal } from "../access/AccessModal";
+import { useSignUpModal } from "../access/SignUpModal";
+import { ScrollReveal } from "../../components/ScrollReveal";
 
 const EXAMPLES = [
   "AI meeting assistant that summarizes and assigns action items",
@@ -256,7 +257,7 @@ export function Simulate() {
 
 function IdleHint() {
   return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+    <ScrollReveal stagger variant="fade" className="grid grid-cols-1 gap-3 md:grid-cols-3">
       {[
         {
           n: "01",
@@ -282,7 +283,7 @@ function IdleHint() {
           <p className="mt-2 text-[13px] leading-[1.6] text-ink-dim">{card.d}</p>
         </div>
       ))}
-    </div>
+    </ScrollReveal>
   );
 }
 
@@ -433,7 +434,7 @@ function ResultsPanel({
   source: "cache" | "computed" | null;
   onReset: () => void;
 }) {
-  const { openAccessModal } = useAccessModal();
+  const { openSignUpModal } = useSignUpModal();
   const ranked = useMemo(() => {
     const all = [result.bestPath, ...result.alternatives];
     const maxArr = Math.max(...all.map((p) => p.arr), 1);
@@ -683,7 +684,7 @@ function ResultsPanel({
         </button>
         <button
           type="button"
-          onClick={openAccessModal}
+          onClick={openSignUpModal}
           className="inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-medium text-bg transition hover:bg-chronos"
         >
           Continue in workspace

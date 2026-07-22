@@ -87,10 +87,12 @@ describe("betaChecklist", () => {
       shareAcknowledged: true,
       preferredAuthProvider: "google",
     });
-    // only share done among required when no goal/sim
+    // share + llm are optional — no required items done without goal/sim/memory
     const p = betaChecklistProgress(items);
-    expect(p.requiredTotal).toBe(4);
-    expect(p.requiredDone).toBe(1);
-    expect(p.percent).toBe(25);
+    expect(p.requiredTotal).toBe(3);
+    expect(p.requiredDone).toBe(0);
+    expect(p.percent).toBe(0);
+    expect(items.find((i) => i.id === "share")?.optional).toBe(true);
+    expect(items.find((i) => i.id === "share")?.done).toBe(true);
   });
 });

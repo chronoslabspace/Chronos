@@ -82,10 +82,31 @@ Open [http://localhost:5173](http://localhost:5173).
 |----------|---------|
 | `VITE_SUPABASE_URL` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon key (browser) |
-| `VITE_MOCK_ACCESS_REQUESTS` | Optional — mock access form |
+| `VITE_SENTRY_DSN` | Optional — client error monitoring (production) |
 | `XAI_API_KEY` | **Server-only** Edge Function secret for Grok (never `VITE_`) |
 
 See [`.env.example`](./.env.example).
+
+### Production ops (public beta)
+
+```bash
+# 1) Apply SQL (Dashboard → SQL Editor)
+#    - supabase/migrations/* (through public_beta_auth)
+#    - supabase/repair_workspace_grants.sql  (authenticated grants)
+
+# 2) Edge Grok (if marketing advisor)
+supabase secrets set XAI_API_KEY=xai-...
+supabase functions deploy grok
+
+# 3) Hosting env (Vercel / GH Pages build)
+#    VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_SENTRY_DSN
+
+# 4) Auth → URL config: https://chronoslab.space/auth/callback
+#    Providers: Google + GitHub enabled
+
+# 5) If keys were ever pasted in chat or committed: rotate anon + service_role
+#    in Supabase → Settings → API, then update hosting env.
+```
 
 ---
 
@@ -147,7 +168,7 @@ Legacy `/dashboard` redirects to `/workspace`.
 
 ---
 
-## Workspace loop (private beta)
+## Workspace loop (public beta)
 
 ```text
 Sign in → Create workspace → Set goal → Upload knowledge

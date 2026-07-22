@@ -1,4 +1,5 @@
 import { PageHeader } from "./PageHeader";
+import { ScrollReveal } from "./ScrollReveal";
 
 export type Release = {
   version: string;
@@ -10,6 +11,36 @@ export type Release = {
 };
 
 const releases: Release[] = [
+  {
+    version: "4.9.0",
+    date: "2026-07-22",
+    tag: "minor",
+    title: "Public beta open · join signup · grant repair",
+    summary:
+      "Waitlist/request-access removed. Join public beta opens an in-page signup modal (Google, GitHub, email signup/sign-in, magic link). Workspace motion polish, Supabase authenticated grant repair SQL, dual-write hardening, and Decision Workspace launch stack merged to mainline.",
+    highlights: [
+      {
+        label: "Join public beta",
+        detail: "Nav/CTA/hero open SignUpModal — no access_requests queue",
+      },
+      {
+        label: "Auth",
+        detail: "signUpWithPassword + OAuth + magic link; bootstrap personal workspace",
+      },
+      {
+        label: "Cloud grants",
+        detail: "repair SQL for is_workspace_member EXECUTE + table grants for authenticated",
+      },
+      {
+        label: "Motion",
+        detail: "Quiet page-enter, cascade, and drawer motion on Decision Workspace shell",
+      },
+      {
+        label: "Ops",
+        detail: "Optional VITE_SENTRY_DSN · Edge XAI_API_KEY · E2E join-public-beta + decision loop",
+      },
+    ],
+  },
   {
     version: "4.8.1",
     date: "2026-07-21",
@@ -249,19 +280,21 @@ export function ChangelogPage() {
       <section className="relative py-16 lg:py-20">
         <div className="mx-auto max-w-4xl px-6 lg:px-10">
           {/* Summary stats */}
-          <div className="mb-12 grid grid-cols-3 gap-4 rounded-xl border border-line bg-bg-soft p-5">
+          <ScrollReveal variant="fade" className="mb-12 grid grid-cols-3 gap-4 rounded-xl border border-line bg-bg-soft p-5">
             <Stat label="Releases" value={releases.length} />
             <Stat label="Current" value={releases[0].version} />
             <Stat label="Last shipped" value={releases[0].date.slice(0, 7)} />
-          </div>
+          </ScrollReveal>
 
           {/* Timeline */}
           <div className="relative space-y-8">
             {/* Vertical line */}
             <div className="absolute left-[27px] top-3 bottom-3 w-px bg-line" />
 
-            {releases.map((r) => (
-              <ReleaseCard key={r.version} release={r} />
+            {releases.map((r, i) => (
+              <ScrollReveal key={r.version} delay={Math.min(i * 50, 250)} variant="up">
+                <ReleaseCard release={r} />
+              </ScrollReveal>
             ))}
           </div>
 

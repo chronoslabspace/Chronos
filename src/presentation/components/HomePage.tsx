@@ -1,16 +1,12 @@
-import { useCallback } from "react";
 import { Link } from "react-router-dom";
 import { CTA } from "./CTA";
 import { BranchingAnimation } from "./BranchingAnimation";
 import { ScrollReveal } from "./ScrollReveal";
 import { HomeLiveDemo } from "../features/planner/HomeLiveDemo";
-import { useAccessModal } from "../features/access/AccessModal";
+import { useSignUpModal } from "../features/access/SignUpModal";
 
 export function HomePage() {
-  const { openAccessModal } = useAccessModal();
-  const scrollToDemo = useCallback(() => {
-    document.getElementById("live-demo")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  const { openSignUpModal } = useSignUpModal();
   return (
     <>
       {/* HERO: what it is, why it matters, and why it is different. */}
@@ -49,10 +45,10 @@ export function HomePage() {
                 </Link>
                 <button
                   type="button"
-                  onClick={openAccessModal}
+                  onClick={openSignUpModal}
                   className="inline-flex items-center gap-2 text-sm text-ink-faint transition hover:text-chronos"
                 >
-                  Request invite
+                  Join public beta
                 </button>
               </div>
             </div>

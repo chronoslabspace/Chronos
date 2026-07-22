@@ -46,8 +46,8 @@ export function DashboardPage() {
   const latestSaved = decisions[0] ?? null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 lg:max-w-none">
-      <header className="border-b border-line pb-5">
+    <div className="ws-cascade mx-auto max-w-3xl space-y-5 lg:max-w-none">
+      <header className="header-enter border-b border-line pb-5">
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint">
           Decision workspace
         </div>
@@ -62,7 +62,7 @@ export function DashboardPage() {
       <BetaChecklist items={checklist} />
 
       {latestSaved && (
-        <section className="rounded-2xl border border-chronos/35 bg-chronos/5 px-5 py-4 sm:px-6">
+        <section className="workspace-panel-enter rounded-2xl border border-chronos/35 bg-chronos/5 px-5 py-4 sm:px-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-chronos">

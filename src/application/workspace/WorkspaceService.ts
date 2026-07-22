@@ -27,6 +27,8 @@ export type WorkspaceCloudStore = {
   list(ownerId: string): Promise<WorkspaceRecord[]>;
   load(ownerId: string, workspaceId?: string): Promise<WorkspaceHome | null>;
   save(home: WorkspaceHome): Promise<void>;
+  deleteKnowledge?(knowledgeId: string): Promise<void>;
+  deleteNote?(noteId: string): Promise<void>;
 };
 
 function nowIso() {
@@ -64,6 +66,8 @@ export type WorkspaceServiceOptions = {
 export class WorkspaceService {
   private readonly local: LocalWorkspaceStore;
   private readonly remote: WorkspaceCloudStore | null;
+  /** Last cloud dual-write / load error (null when healthy). */
+  private remoteError: string | null = null;
 
   constructor(options: WorkspaceServiceOptions | LocalWorkspaceStore = {}) {
     // Back-compat: tests pass LocalWorkspaceStore directly
@@ -80,12 +84,35 @@ export class WorkspaceService {
     }
   }
 
+  /** Surface dual-write failures to the UI (local copy may still have succeeded). */
+  getRemoteError(): string | null {
+    return this.remoteError;
+  }
+
+  private setRemoteError(err: unknown | null) {
+    if (!err) {
+      this.remoteError = null;
+      return;
+    }
+    const anyErr = err as { message?: string; code?: string; hint?: string };
+    const parts = [
+      anyErr.message || (err instanceof Error ? err.message : String(err)),
+      anyErr.code ? `(${anyErr.code})` : null,
+      anyErr.hint || null,
+    ].filter(Boolean);
+    this.remoteError = parts.join(" ");
+  }
+
   async listWorkspaces(ownerId: string): Promise<WorkspaceRecord[]> {
     if (this.remote) {
       try {
         const remote = await this.remote.list(ownerId);
-        if (remote.length) return remote;
+        if (remote.length) {
+          this.setRemoteError(null);
+          return remote;
+        }
       } catch (err) {
+        this.setRemoteError(err);
         console.warn("[workspace] Supabase list failed; using local store.", err);
       }
     }
@@ -109,9 +136,13 @@ export class WorkspaceService {
           if (local) {
             try {
               await this.remote.save(merged);
+              this.setRemoteError(null);
             } catch (err) {
+              this.setRemoteError(err);
               console.warn("[workspace] Supabase merge save failed; local merged copy kept.", err);
             }
+          } else {
+            this.setRemoteError(null);
           }
           return merged;
         }
@@ -121,12 +152,16 @@ export class WorkspaceService {
           const normalized = this.normalize(local);
           try {
             await this.remote.save(normalized);
+            this.setRemoteError(null);
           } catch (err) {
+            this.setRemoteError(err);
             console.warn("[workspace] Supabase backfill failed; local copy kept.", err);
           }
           return normalized;
         }
+        this.setRemoteError(null);
       } catch (err) {
+        this.setRemoteError(err);
         console.warn("[workspace] Supabase load failed; using local store.", err);
       }
     }
@@ -271,7 +306,7 @@ export class WorkspaceService {
     if (!home.knowledge.some((k) => k.id === knowledgeId)) {
       throw new Error("Knowledge item not found.");
     }
-    if (this.remote) {
+    if (this.remote?.deleteKnowledge) {
       try {
         await this.remote.deleteKnowledge(knowledgeId);
       } catch (err) {
@@ -319,7 +354,7 @@ export class WorkspaceService {
     if (!home.notes.some((n) => n.id === noteId)) {
       throw new Error("Note not found.");
     }
-    if (this.remote) {
+    if (this.remote?.deleteNote) {
       try {
         await this.remote.deleteNote(noteId);
       } catch (err) {
@@ -668,7 +703,9 @@ export class WorkspaceService {
     if (this.remote) {
       try {
         await this.remote.save(normalized);
+        this.setRemoteError(null);
       } catch (err) {
+        this.setRemoteError(err);
         console.warn("[workspace] Supabase save failed; local copy kept.", err);
       }
     }
