@@ -12,6 +12,46 @@ export type Release = {
 
 const releases: Release[] = [
   {
+    version: "5.0.0",
+    date: "2026-07-22",
+    tag: "major",
+    title: "Decision Report centerpiece · honest sim · cloud UUID fix",
+    summary:
+      "Product experience focuses on the keepable Decision Report and a quiet HQ (Pulse → Goal → Report → Next action). Simulation uses honest Monte Carlo sample counts with hard-constraint disqualification and EV scoring. Futures persist as UUIDs so cloud dual-write succeeds. Onboarding is Goal → Knowledge → Simulation → Recommendation; palette and motioned workspace loading ship.",
+    highlights: [
+      {
+        label: "Decision Report",
+        detail:
+          "Centerpiece artifact: Goal · Recommendation · Confidence · Evidence · Trade-offs · Risks · Next steps — copy / download .md",
+      },
+      {
+        label: "Quiet HQ",
+        detail: "Pulse → Current goal → full report → Next action → Knowledge · Timeline (widget noise removed)",
+      },
+      {
+        label: "Honest simulation",
+        detail:
+          "Real sample budgets (not fake 1000 paths); hard constraints disqualify; structured runway/MRR signals; Future A★ comparison",
+      },
+      {
+        label: "Simulation history",
+        detail: "Today · Yesterday · Last week buckets on the simulations list",
+      },
+      {
+        label: "Cloud dual-write",
+        detail: "Future/timeline IDs are UUIDs — fixes 22P02 invalid uuid (0x…) sync failures",
+      },
+      {
+        label: "Workspace UX",
+        detail: "Chronos palette (#111 #2A4D5F #60899B #989898 #C4C2AA #F2EDEA) · orbit enter loading · reduced-motion safe",
+      },
+      {
+        label: "Repo hygiene",
+        detail: "node_modules and dist untracked; empty Supabase env no longer crashes the SPA",
+      },
+    ],
+  },
+  {
     version: "4.9.0",
     date: "2026-07-22",
     tag: "minor",

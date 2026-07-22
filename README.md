@@ -188,8 +188,14 @@ Legacy `/dashboard` redirects to `/workspace`.
 ## Workspace loop (public beta)
 
 ```text
-Sign in → Create workspace → Set goal → Upload knowledge
-       → Run simulation → Review report & timeline → Re-run / memory
+Sign in → Goal → Knowledge → Simulation
+       → Decision Report (keep) → Save path → Log outcome
+```
+
+Dashboard HQ is intentionally quiet:
+
+```text
+Pulse → Current goal → Decision Report → Next action → Knowledge · Timeline
 ```
 
 Persistence is **local-first with cloud dual-write**:
@@ -197,6 +203,7 @@ Persistence is **local-first with cloud dual-write**:
 - `localStorage` for instant resume  
 - Supabase for durable multi-session memory when authenticated  
 - Load **merges** remote + local simulation history and **backfills** empty cloud from local  
+- Future/timeline row IDs are **UUIDs** (required by Postgres)
 
 ---
 
@@ -205,10 +212,10 @@ Persistence is **local-first with cloud dual-write**:
 The home live demo and `/simulate` share `publicStartupSimulator`:
 
 1. Decompose the objective into a **task graph**  
-2. Simulate ranked go-to-market paths  
-3. Collapse to best path + alternatives (ARR, probability, roadmap)  
+2. Monte Carlo samples over strategy archetypes (honest `pathsEvaluated` count)  
+3. Collapse to best path + alternatives (ARR × probability EV, roadmap)  
 
-Deterministic for a given prompt (cacheable).
+Deterministic for a given prompt + sample budget (cacheable).
 
 ---
 

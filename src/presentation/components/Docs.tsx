@@ -368,12 +368,12 @@ function Introduction() {
             body: "Ranked paths with confidence, risk, and distinctive hooks (Fastest path, Lower risk, Highest upside).",
           },
           {
-            title: "Transparent reasoning",
-            body: "Every recommendation explains why — lowest execution risk, fits your objective, fewer dependencies, highest expected success.",
+            title: "Transparent evidence",
+            body: "Every recommendation lists evidence — risk, fit to objective, dependencies, expected success, knowledge grounding.",
           },
           {
             title: "Decision Report",
-            body: "A shareable artifact: objective, context, alternatives, trade-offs, confidence, risks, next actions.",
+            body: "The keepable artifact: Goal · Recommendation · Confidence · Evidence · Trade-offs · Risks · Next steps — copy or download as markdown.",
           },
           {
             title: "Persistent memory",
@@ -416,12 +416,12 @@ function Introduction() {
       <FlowSteps
         steps={[
           "Create workspace",
-          "Set objective",
-          "Add context",
+          "Set goal",
+          "Add knowledge",
           "Generate futures",
-          "Compare outcomes",
-          "Receive Decision Report",
-          "Save path · track outcome",
+          "Decision Report (keepable)",
+          "Compare · save path",
+          "Log outcome",
         ]}
       />
 
@@ -483,8 +483,8 @@ function HowItWorksDocs() {
 
       <DocSub>Collapse</DocSub>
       <DocBody>
-        Futures are ranked and collapsed into a Decision Report: recommended path,
-        confidence, “Recommended because” reasons, risks, and next actions. You
+        Futures are ranked and collapsed into a Decision Report: recommendation,
+        confidence, evidence, trade-offs, risks, and next steps. You
         still choose which path to save — Chronos recommends; you decide.
       </DocBody>
 
@@ -494,8 +494,7 @@ function HowItWorksDocs() {
 
       <DocSub>Why this builds trust</DocSub>
       <DocBody>
-        Transparent reasoning is required on every recommendation. You should always
-        see short, scannable reasons such as:
+        Every Decision Report includes an Evidence section. Typical bullets:
       </DocBody>
       <ul className="mt-4 space-y-2 text-[15px] text-ink">
         {[
@@ -503,6 +502,7 @@ function HowItWorksDocs() {
           "fits your stated objective",
           "requires fewer dependencies",
           "highest expected success",
+          "grounded in your knowledge sources",
         ].map((item) => (
           <li key={item} className="flex gap-2.5">
             <span className="text-chronos">•</span>
@@ -598,7 +598,11 @@ function BetaLimitationsDocs() {
         items={[
           {
             title: "Simulation engine",
-            body: "Futures are generated and scored with the current product engine — useful for structured decisions, not a full Monte Carlo of the real world.",
+            body: "Honest Monte Carlo over strategy archetypes (sample counts match what was scored — not marketing “1000 paths”). Useful for structured decisions; not a calibrated model of markets or codebases.",
+          },
+          {
+            title: "Hard constraints",
+            body: "Hard constraints can disqualify futures (score 0). Soft constraints nudge ranking. Paths ruled out appear in risks when applicable.",
           },
           {
             title: "Knowledge (RAG-lite)",
@@ -614,18 +618,18 @@ function BetaLimitationsDocs() {
           },
           {
             title: "Outcome tracking",
-            body: "Follow-through (Yes / Partially / No) and free-text outcomes are supported; advanced calibration from outcomes into the next model is early.",
+            body: "Follow-through (Yes / Partially / No) and free-text outcomes are stored; they do not yet reweight the engine for the next run.",
           },
           {
-            title: "Mobile polish",
-            body: "Core flows work on small screens; dense comparison layouts are optimized first for desktop.",
+            title: "Cloud dual-write",
+            body: "Local-first with Supabase sync when signed in. If cloud fails, work stays on this device; fix env/grants and re-run for new sims. Future IDs are UUIDs for Postgres compatibility.",
           },
         ]}
       />
 
       <Callout tone="tip" title="What is solid today">
-        Create workspace → set objective → add context → generate futures → compare
-        → Decision Report → save path → log outcomes. That loop is the beta focus.
+        Goal → Knowledge → Simulation → Decision Report → save path → log outcomes.
+        That loop — and the keepable report — is the beta focus.
       </Callout>
     </div>
   );
@@ -651,15 +655,15 @@ function DocsFaq() {
     },
     {
       q: "Why should I trust a recommendation?",
-      a: "Every report includes “Recommended because” bullets (risk, fit to objective, dependencies, expected success) plus alternatives, trade-offs, confidence, and risks — so you can disagree with evidence.",
+      a: "Every report includes Evidence (risk, fit to objective, dependencies, expected success, knowledge grounding) plus trade-offs, confidence, and risks — so you can disagree with receipts.",
     },
     {
       q: "What is a Decision Report?",
-      a: "The artifact you remember and share: objective, context used, alternative futures, trade-offs, confidence, recommended path, risks, next actions — copy or download as markdown.",
+      a: "The keepable product artifact: Goal · Recommendation · Confidence · Evidence · Trade-offs · Risks · Next steps. Copy or download as markdown from the workspace.",
     },
     {
       q: "Does Chronos remember past work?",
-      a: "Yes. Previous goals, simulations, saved paths, knowledge, and outcomes persist locally and sync when cloud is available. Leave and come back without restarting from zero.",
+      a: "Yes. Goals, simulations, saved paths, knowledge, and outcomes persist locally and dual-write to Supabase when signed in. Simulation history is grouped Today / Yesterday / Last week.",
     },
     {
       q: "Is Chronos production-ready?",
@@ -714,11 +718,11 @@ function GettingStarted() {
       <FlowSteps
         steps={[
           "Join public beta (Google / GitHub / email)",
-          "Personal workspace bootstrapped",
-          "Create first decision",
-          "Add context",
+          "Set goal",
+          "Add knowledge",
           "Generate futures",
-          "Save path · dashboard",
+          "Keep Decision Report",
+          "Save path · log outcome",
         ]}
       />
 
@@ -758,29 +762,30 @@ function GettingStarted() {
         what “success” looks like. Better goals produce more useful futures.
       </DocBody>
 
-      <DocSub>4. Upload knowledge</DocSub>
+      <DocSub>4. Add knowledge</DocSub>
       <DocBody>
         Ground the simulation with PDFs, markdown, notes, or imported URLs.
-        Chronos uses this library as context when generating and ranking futures.
+        Chronos uses this library when generating and ranking futures. Onboarding
+        requires at least one source before the dashboard unlocks.
       </DocBody>
 
       <DocSub>5. Run simulation</DocSub>
       <DocBody>
-        Launch a simulation from your workspace. Chronos generates multiple
-        possible strategies, evaluates trade-offs, and ranks outcomes against
-        your goal.
+        From Simulations, state the decision and optional hard/soft constraints.
+        Chronos scores strategy futures (honest sample budget), disqualifies
+        paths that violate hard constraints, and opens the Decision Report.
       </DocBody>
 
-      <DocSub>6. Review recommendation</DocSub>
+      <DocSub>6. Keep the Decision Report</DocSub>
       <DocBody>
-        Open the decision report: best path, confidence signals, risks, and
-        alternatives. Compare futures on the timeline, then save or re-run as
-        context changes.
+        The report is the product: Goal · Recommendation · Confidence · Evidence ·
+        Trade-offs · Risks · Next steps. Copy or download markdown, choose a path
+        to save, then log whether you followed it and how it turned out.
       </DocBody>
 
       <Callout tone="info" title="First simulation checklist">
-        Goal defined · at least one knowledge source · constraints listed ·
-        success criteria stated. Then run.
+        Goal defined · at least one knowledge source · constraints listed · then
+        run — leave with a report you can keep.
       </Callout>
     </div>
   );
@@ -1119,47 +1124,48 @@ function DecisionReportsDocs() {
     <div>
       <DocTitle>Decision reports</DocTitle>
       <DocBody>
-        The Decision Report is the artifact you remember and share. It is not a
-        chat reply — it packages the full decision: objective, context, ranked
-        futures, trade-offs, confidence, recommendation, risks, and next actions.
+        The Decision Report is the <strong className="text-ink">product centerpiece</strong>{" "}
+        — the keepable artifact after simulation. It is not a chat reply. Dashboard HQ
+        and simulation detail both lead with the report so you leave with something you
+        can copy, download, and reopen.
       </DocBody>
 
       <TopicList
         items={[
           {
-            title: "Objective",
-            body: "The decision Chronos was asked to work — usually your active goal.",
+            title: "Goal",
+            body: "The decision surface — usually your active workspace goal.",
           },
           {
-            title: "Context used",
-            body: "Knowledge and notes that grounded the ranking for this run.",
+            title: "Recommendation",
+            body: "The ranked path to commit (or the path you already saved).",
           },
           {
-            title: "Alternative futures",
-            body: "Ranked paths with confidence, risk, and distinctive hooks (Fastest path, Lower risk, Highest upside).",
+            title: "Confidence",
+            body: "How strongly the ranking is supported (0–100%).",
+          },
+          {
+            title: "Evidence",
+            body: "Why this path: risk, fit to objective, dependencies, expected success, knowledge grounding — plus supporting detail.",
           },
           {
             title: "Trade-offs",
-            body: "What each future gains or gives up relative to the engine best.",
+            body: "What each future gains or gives up vs the ranked best, including Future A★ / B / C cards.",
           },
           {
-            title: "Recommended because",
-            body: "Transparent trust bullets: lowest execution risk, fits your objective, fewer dependencies, highest expected success.",
+            title: "Risks",
+            body: "Where uncertainty remains, including hard constraints and disqualified paths when relevant.",
           },
           {
-            title: "Confidence & recommended path",
-            body: "How strongly the ranking is supported and which path to commit.",
-          },
-          {
-            title: "Risks & next actions",
-            body: "Where uncertainty remains and what to do next — then track outcomes over time.",
+            title: "Next steps",
+            body: "What to do next — save path, log follow-through, or re-run with tighter constraints.",
           },
         ]}
       />
 
       <Callout tone="tip" title="How to use a report">
-        Share the report with stakeholders, challenge weak assumptions with new
-        knowledge, then re-run if the ranking still feels fragile.
+        Copy or download markdown, share with stakeholders, challenge weak assumptions
+        with new knowledge, then re-run if the ranking still feels fragile.
       </Callout>
     </div>
   );
