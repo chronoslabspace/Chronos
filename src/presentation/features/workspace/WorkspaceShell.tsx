@@ -199,6 +199,7 @@ function WorkspaceShellInner() {
         <nav
           className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/95 backdrop-blur-xl lg:hidden"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          aria-label="Workspace"
         >
           <div className="mx-auto grid max-w-6xl grid-cols-6 gap-0 px-0.5 py-1">
             {navItems.map((item) => (
@@ -206,13 +207,14 @@ function WorkspaceShellInner() {
                 key={item.to}
                 to={item.to}
                 end={item.end}
+                aria-label={item.label}
                 className={({ isActive }) =>
-                  `workspace-nav-active flex flex-col items-center rounded-lg py-2 font-mono text-[8px] uppercase tracking-[0.04em] transition ${
+                  `workspace-nav-active flex min-h-11 flex-col items-center justify-center rounded-lg px-0.5 py-1.5 font-mono text-[9px] uppercase tracking-[0.02em] transition sm:text-[10px] ${
                     isActive ? "bg-chronos/10 text-chronos" : "text-ink-faint hover:text-ink-dim"
                   }`
                 }
               >
-                {item.short}
+                <span className="max-w-full truncate">{item.short}</span>
               </NavLink>
             ))}
           </div>

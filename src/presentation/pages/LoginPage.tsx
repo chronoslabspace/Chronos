@@ -127,12 +127,12 @@ export function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg px-6">
-      <div className="w-full max-w-md rounded-2xl border border-line bg-bg-soft p-8">
+    <div className="flex min-h-dvh items-center justify-center bg-bg px-4 py-8 sm:px-6">
+      <div className="w-full max-w-md rounded-2xl border border-line bg-bg-soft p-5 sm:p-8">
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-chronos">
           {intentStart ? "Get started" : "Sign in"}
         </div>
-        <h1 className="mt-2 font-serif text-4xl text-ink">
+        <h1 className="mt-2 font-serif text-3xl text-ink sm:text-4xl">
           {intentStart ? "Start deciding" : "Welcome back"}
         </h1>
         <p className="mt-2 text-sm text-ink-dim">

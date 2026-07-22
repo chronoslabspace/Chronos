@@ -85,10 +85,13 @@ export function Nav() {
           <button
             type="button"
             onClick={openSignUpModal}
-            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-bg transition hover:bg-chronos"
+            aria-label="Join public beta"
+            className="group relative inline-flex min-h-9 items-center gap-2 overflow-hidden rounded-full bg-ink px-3 py-2 text-[13px] font-medium text-bg transition hover:bg-chronos sm:px-4"
           >
             <span className="hidden sm:inline">Join public beta</span>
-            <span className="sm:hidden">Join beta</span>
+            <span className="sm:hidden" aria-hidden="true">
+              Join beta
+            </span>
             <svg width="12" height="12" viewBox="0 0 12 12" className="transition group-hover:translate-x-0.5">
               <path
                 d="M2 6h8M6 2l4 4-4 4"
