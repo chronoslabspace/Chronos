@@ -31,6 +31,11 @@ type WorkspaceContextValue = {
   workspaces: WorkspaceRecord[];
   loading: boolean;
   error: string | null;
+  /**
+   * Last dual-write / cloud load failure. Local memory may still be intact —
+   * surfaces honest sync state without blocking the decision loop.
+   */
+  remoteError: string | null;
   createWorkspace: (name: string, description?: string) => Promise<void>;
   switchWorkspace: (workspaceId: string) => Promise<void>;
   setGoal: (title: string, description?: string) => Promise<void>;
@@ -75,7 +80,12 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [workspaces, setWorkspaces] = useState<WorkspaceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [remoteError, setRemoteError] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
+
+  const syncRemoteError = useCallback(() => {
+    setRemoteError(workspaceService.getRemoteError());
+  }, []);
 
   const resolveOwnerId = useCallback(async (): Promise<string | null> => {
     const session = await authService.currentSession();
@@ -96,6 +106,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         setHome(null);
         setWorkspaces([]);
         setPreferences(DEFAULT_PREFERENCES);
+        setRemoteError(null);
         return;
       }
       setOwnerId(id);
@@ -114,12 +125,14 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       ]);
       setHome(loaded);
       setWorkspaces(list);
+      syncRemoteError();
     } catch (err) {
       setError((err as Error).message);
+      syncRemoteError();
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [syncRemoteError]);
 
   useEffect(() => {
     trackProductEvent("session_start");
@@ -153,13 +166,15 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         setHome(next);
         const list = await workspaceService.listWorkspaces(id);
         setWorkspaces(list);
+        syncRemoteError();
         return next;
       } catch (err) {
         setError((err as Error).message);
+        syncRemoteError();
         throw err;
       }
     },
-    [ownerId, resolveOwnerId]
+    [ownerId, resolveOwnerId, syncRemoteError]
   );
 
   const updatePreferences = useCallback(
@@ -178,6 +193,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       workspaces,
       loading,
       error,
+      remoteError,
       preferences,
       updatePreferences,
       markShareAcknowledged: () => updatePreferences({ shareAcknowledged: true }),
@@ -292,6 +308,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       workspaces,
       loading,
       error,
+      remoteError,
       preferences,
       updatePreferences,
       refresh,

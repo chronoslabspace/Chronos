@@ -190,8 +190,10 @@ export class SupabaseWorkspaceRepository {
     }
 
     if (home.recentSimulations.length > 0) {
+      // Parent simulations before children so parent_simulation_id FKs succeed.
+      const orderedSims = orderSimulationsForUpsert(home.recentSimulations);
       const { error } = await this.client.from("simulations").upsert(
-        home.recentSimulations.map((s) => ({
+        orderedSims.map((s) => ({
           id: s.id,
           workspace_id: s.workspace_id,
           goal_id: s.goal_id,
@@ -257,6 +259,35 @@ export class SupabaseWorkspaceRepository {
     const { error } = await this.client.from("notes").delete().eq("id", noteId);
     if (error) throw error;
   }
+}
+
+/** Topological order: roots first, then children by version/created_at. */
+export function orderSimulationsForUpsert(
+  sims: readonly SimulationRecord[]
+): SimulationRecord[] {
+  const byId = new Map(sims.map((s) => [s.id, s]));
+  const visiting = new Set<string>();
+  const done = new Set<string>();
+  const out: SimulationRecord[] = [];
+
+  function visit(id: string) {
+    if (done.has(id) || !byId.has(id)) return;
+    if (visiting.has(id)) {
+      // Cycle guard — still emit once
+      return;
+    }
+    visiting.add(id);
+    const sim = byId.get(id)!;
+    if (sim.parent_simulation_id) visit(sim.parent_simulation_id);
+    visiting.delete(id);
+    done.add(id);
+    out.push(sim);
+  }
+
+  // Stable: older roots first so bulk insert is predictable
+  const roots = [...sims].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  for (const s of roots) visit(s.id);
+  return out;
 }
 
 function mapWorkspace(row: Record<string, unknown>): WorkspaceRecord {

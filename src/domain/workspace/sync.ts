@@ -128,6 +128,7 @@ function mergeRelationMaps<T extends FutureRecord | TimelineNodeRecord>(
     const r = remote[key] ?? [];
     const l = local[key] ?? [];
     if (r.length === 0 && l.length === 0) continue;
+    // Prefer non-empty side when cloud row exists but futures never landed (partial dual-write).
     if (r.length === 0) {
       out[key] = l;
       continue;
