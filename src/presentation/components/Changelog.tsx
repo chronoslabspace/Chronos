@@ -266,7 +266,10 @@ export function ChangelogPage() {
       <section className="relative py-16 lg:py-20">
         <div className="mx-auto max-w-4xl px-6 lg:px-10">
           {/* Summary stats */}
-          <ScrollReveal variant="fade" className="mb-12 grid grid-cols-3 gap-4 rounded-xl border border-line bg-bg-soft p-5">
+          <ScrollReveal
+            variant="fade"
+            className="mb-12 grid grid-cols-1 gap-4 rounded-xl border border-line bg-bg-soft p-5 sm:grid-cols-3"
+          >
             <Stat label="Releases" value={releases.length} />
             <Stat label="Current" value={releases[0].version} />
             <Stat label="Last shipped" value={releases[0].date.slice(0, 7)} />

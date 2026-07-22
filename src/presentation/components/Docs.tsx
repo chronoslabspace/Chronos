@@ -90,13 +90,20 @@ export function Docs() {
         <div className="mx-auto max-w-[1400px] px-6 py-6 lg:px-10">
           {/* Mobile: horizontal nav strip */}
           <div className="mb-6 lg:hidden">
-            <div className="-mx-6 flex gap-1.5 overflow-x-auto px-6 pb-2">
+            <div
+              className="-mx-6 flex gap-1.5 overflow-x-auto overscroll-x-contain px-6 pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]"
+              role="tablist"
+              aria-label="Documentation sections"
+            >
               {NAV.flatMap((g) =>
                 g.items.map((item) => (
                   <button
                     key={item.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={section === item.id}
                     onClick={() => selectSection(item.id)}
-                    className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 font-mono text-[11px] transition ${
+                    className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 font-mono text-[11px] transition ${
                       section === item.id
                         ? "bg-chronos/15 text-chronos"
                         : "border border-line text-ink-dim hover:border-line-strong hover:text-ink"
