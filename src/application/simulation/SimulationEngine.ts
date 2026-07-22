@@ -66,11 +66,33 @@ export type DecisionSignals = {
   corpus: string;
 };
 
-function id(prefix: string) {
+/** Postgres `uuid` columns reject demo path ids like `0x8d21`. */
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function newUuid(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
-  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  // Deterministic-enough fallback for non-browser unit tests without Web Crypto.
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (ch) => {
+    const r = (Math.random() * 16) | 0;
+    const v = ch === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+/** Accept only real UUIDs for cloud-persisted rows; regenerate otherwise. */
+function asPersistedId(candidate: string | undefined | null): string {
+  if (typeof candidate === "string" && UUID_RE.test(candidate.trim())) {
+    return candidate.trim();
+  }
+  return newUuid();
+}
+
+/** @deprecated use newUuid / asPersistedId — kept name for call-site clarity */
+function id(_prefix?: string) {
+  return newUuid();
 }
 
 function hash(text: string): number {
@@ -264,7 +286,8 @@ export class SimulationEngine {
       const rankedIneligible = [...ineligible].sort((a, b) => a.name.localeCompare(b.name));
       const futures = [...rankedEligible, ...rankedIneligible].slice(0, 5).map((f) => ({
         ...f,
-        id: f.id || id("future"),
+        // Re-assert UUID: never ship startup-sim `0x…` or `var-…` ids to Supabase.
+        id: asPersistedId(f.id),
         simulation_id: input.simulationId,
       }));
       this.setTask(tasks, "rank", "completed");
@@ -572,7 +595,7 @@ export class SimulationEngine {
 
     if (violations.length > 0) {
       return {
-        id: path.id || id("future"),
+        id: asPersistedId(path.id),
         simulation_id: input.simulationId,
         name,
         score: 0,
@@ -660,7 +683,7 @@ export class SimulationEngine {
     }
 
     return {
-      id: path.id || id("future"),
+      id: asPersistedId(path.id),
       simulation_id: input.simulationId,
       name,
       score: Math.round(score * 1000) / 1000,

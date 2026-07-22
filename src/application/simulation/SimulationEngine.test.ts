@@ -72,6 +72,17 @@ describe("SimulationEngine", () => {
     for (let i = 1; i < eligible.length; i++) {
       expect(eligible[i - 1].score).toBeGreaterThanOrEqual(eligible[i].score);
     }
+
+    // Cloud tables require uuid PKs — never leak demo `0x…` path ids
+    const uuidRe =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    for (const f of out.futures) {
+      expect(f.id).toMatch(uuidRe);
+      expect(f.id.startsWith("0x")).toBe(false);
+    }
+    for (const node of out.timeline) {
+      expect(node.id).toMatch(uuidRe);
+    }
   });
 
   it("disqualifies raise-heavy futures under hard no-raise constraints", () => {
