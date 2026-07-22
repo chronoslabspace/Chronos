@@ -29,7 +29,7 @@ export function WorkspaceShell() {
 function WorkspaceShellInner() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { home, loading, ownerId, error } = useWorkspace();
+  const { home, loading, ownerId, error, remoteError } = useWorkspace();
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -127,6 +127,18 @@ function WorkspaceShellInner() {
           </nav>
         )}
       </header>
+
+      {remoteError && (
+        <div
+          role="status"
+          className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-center text-[13px] text-amber-100/90"
+        >
+          Cloud sync failed — decisions are saved on this device.{" "}
+          <span className="font-mono text-[11px] text-ink-faint">
+            {remoteError.length > 120 ? `${remoteError.slice(0, 120)}…` : remoteError}
+          </span>
+        </div>
+      )}
 
       <div className="mx-auto flex max-w-6xl">
         {ready && (
