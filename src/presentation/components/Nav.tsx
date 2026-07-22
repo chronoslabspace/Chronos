@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChronosCMark } from "./ChronosCMark";
-import { useAccessModal } from "../features/access/AccessModal";
+import { useSignUpModal } from "../features/access/SignUpModal";
 
 export function Nav() {
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { openAccessModal } = useAccessModal();
+  const { openSignUpModal } = useSignUpModal();
 
   const links = [
     { label: "Core", to: "/core" },
@@ -84,11 +84,11 @@ export function Nav() {
 
           <button
             type="button"
-            onClick={openAccessModal}
+            onClick={openSignUpModal}
             className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-bg transition hover:bg-chronos"
           >
-            <span className="hidden sm:inline">Request access</span>
-            <span className="sm:hidden">Access</span>
+            <span className="hidden sm:inline">Join public beta</span>
+            <span className="sm:hidden">Join beta</span>
             <svg width="12" height="12" viewBox="0 0 12 12" className="transition group-hover:translate-x-0.5">
               <path
                 d="M2 6h8M6 2l4 4-4 4"

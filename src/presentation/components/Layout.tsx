@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { Nav } from "./Nav";
 import { Footer } from "./Footer";
 import { StarField } from "./StarField";
-import { AccessModalProvider } from "../features/access/AccessModal";
+import { SignUpModalProvider } from "../features/access/SignUpModal";
 
 export function Layout() {
   const { pathname } = useLocation();
@@ -22,7 +22,7 @@ export function Layout() {
         <div className="absolute right-[-10%] bottom-[20%] h-[500px] w-[500px] rounded-full bg-[#60899B] opacity-15 blur-[120px]" />
       </div>
 
-      <AccessModalProvider>
+      <SignUpModalProvider>
         <div className="relative z-10">
           <Nav />
           <div key={pathname} className="page-enter">
@@ -30,7 +30,7 @@ export function Layout() {
           </div>
           <Footer />
         </div>
-      </AccessModalProvider>
+      </SignUpModalProvider>
     </div>
   );
 }

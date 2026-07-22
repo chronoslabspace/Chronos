@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "./PageHeader";
-import { useAccessModal } from "../features/access/AccessModal";
+import { useSignUpModal } from "../features/access/SignUpModal";
 
 type Section =
   | "introduction"
@@ -246,7 +246,7 @@ function Callout({
   title,
   children,
 }: {
-  tone?: "info" | "warn" | "tip";
+  tone?: "info" | "warn" | "tip" | "note";
   title?: string;
   children: React.ReactNode;
 }) {
@@ -254,6 +254,7 @@ function Callout({
     info: "border-chronos/30 bg-chronos/5 text-chronos",
     warn: "border-rose-400/30 bg-rose-400/5 text-rose-400",
     tip: "border-accent-warm/30 bg-accent-warm/5 text-accent-warm",
+    note: "border-line bg-bg-soft/80 text-ink-dim",
   }[tone];
   return (
     <div className={`mt-6 rounded-lg border p-4 ${colors}`}>
@@ -582,7 +583,7 @@ function BetaLimitationsDocs() {
     <div>
       <DocTitle>Current beta limitations</DocTitle>
       <DocBody>
-        Chronos is in private beta. The decision loop works end-to-end; some
+        Chronos is in public beta. The decision loop works end-to-end; some
         platform depth is still landing. Knowing the edges reduces surprises.
       </DocBody>
 
@@ -655,7 +656,7 @@ function DocsFaq() {
     },
     {
       q: "Is Chronos production-ready?",
-      a: "It is private beta. The core decision loop is usable; see Beta limitations for known edges (engine depth, collab, API, etc.).",
+      a: "It is public beta. The core decision loop is usable; see Beta limitations for known edges (engine depth, collab, API, etc.).",
     },
     {
       q: "Who is it for?",
@@ -693,19 +694,19 @@ function DocsFaq() {
 // ============================================================
 
 function GettingStarted() {
-  const { openAccessModal } = useAccessModal();
+  const { openSignUpModal } = useSignUpModal();
 
   return (
     <div>
       <DocTitle>Getting started</DocTitle>
       <DocBody>
-        This is the shortest path from zero to a recommendation. Private beta
-        access is required for the full workspace product.
+        This is the shortest path from zero to a recommendation. Public beta is
+        open — create an account to unlock the full Decision Workspace.
       </DocBody>
 
       <FlowSteps
         steps={[
-          "Get started (Google / GitHub)",
+          "Join public beta (Google / GitHub / email)",
           "Personal workspace bootstrapped",
           "Create first decision",
           "Add context",
@@ -714,19 +715,20 @@ function GettingStarted() {
         ]}
       />
 
-      <DocSub>1. Get started</DocSub>
+      <DocSub>1. Join public beta</DocSub>
       <DocBody>
-        From the landing page choose <strong className="text-ink">Get started</strong>,
-        then continue with Google or GitHub. Chronos creates your profile and a
-        personal workspace with owner membership automatically.
+        From the landing page choose <strong className="text-ink">Join public beta</strong>{" "}
+        or <strong className="text-ink">Get started</strong>, then continue with Google,
+        GitHub, or email. Chronos creates your profile and a personal workspace with
+        owner membership automatically.
       </DocBody>
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={openAccessModal}
+          onClick={openSignUpModal}
           className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-bg transition hover:bg-chronos"
         >
-          Request access
+          Join public beta
         </button>
         <Link
           to="/login"
@@ -1177,7 +1179,7 @@ function ApiDocs() {
 
       <Callout tone="warn" title="Status">
         Endpoints below are illustrative. Paths, payloads, and auth details will
-        be finalized when the API ships. Join the private beta for product access
+        be finalized when the API ships. Join the public beta for product access
         today; API & SDK are on the roadmap.
       </Callout>
 
@@ -1291,7 +1293,7 @@ function RoadmapDocs() {
       />
 
       <Callout tone="info" title="Product status">
-        Chronos is in active development and private beta. See the{" "}
+        Chronos is in active development and public beta. See the{" "}
         <Link to="/roadmap" className="text-chronos underline-offset-2 hover:underline">
           public roadmap
         </Link>{" "}
@@ -1400,7 +1402,7 @@ function SupportDocs() {
         items={[
           {
             title: "Contact",
-            body: "General questions and private beta support via our contact page.",
+            body: "General questions and public beta support via our contact page.",
           },
           {
             title: "X (Twitter)",

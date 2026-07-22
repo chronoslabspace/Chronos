@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useAccessModal } from "../features/access/AccessModal";
+import { useSignUpModal } from "../features/access/SignUpModal";
 import { PageHeader } from "../components/PageHeader";
 import { Platform } from "../components/Platform";
 import { Features } from "../components/Features";
@@ -74,7 +74,7 @@ export function HomePage() {
 // ============================================================
 
 export function CorePage() {
-  const { openAccessModal } = useAccessModal();
+  const { openSignUpModal } = useSignUpModal();
   return (
     <>
       <PageHeader
@@ -151,7 +151,7 @@ export function CorePage() {
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link to="/docs#platform" className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-[12px] text-ink-dim transition hover:border-line-strong hover:text-ink">Language reference →</Link>
-                <button type="button" onClick={openAccessModal} className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-[12px] text-ink-dim transition hover:border-line-strong hover:text-ink">Request workspace →</button>
+                <button type="button" onClick={openSignUpModal} className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-[12px] text-ink-dim transition hover:border-line-strong hover:text-ink">Join public beta →</button>
               </div>
             </div>
             <div className="overflow-hidden rounded-2xl border border-line bg-bg-soft lg:col-span-7">
@@ -171,20 +171,20 @@ export function CorePage() {
               <div className="h-px w-8 bg-chronos/60" />
             </div>
             <h2 className="font-serif text-4xl leading-[1] tracking-tight md:text-5xl">
-              Request workspace access
+              Join the public beta
               <span className="text-ink-faint">.</span>
             </h2>
             <p className="mx-auto mt-4 max-w-md text-[14px] leading-[1.7] text-ink-dim">
-              Tell us what you are building with AI agents. We use the context
-              to provision the right Chronos workspace for your workload.
+              Create a free account and open a Decision Workspace for agent and
+              human temporal decisions.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
-                onClick={openAccessModal}
+                onClick={openSignUpModal}
                 className="group inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-medium text-bg transition hover:bg-chronos"
               >
-                Request access
+                Join public beta
                 <svg width="14" height="14" viewBox="0 0 14 14" className="transition group-hover:translate-x-0.5">
                   <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>

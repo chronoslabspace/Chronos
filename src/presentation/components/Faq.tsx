@@ -1,6 +1,6 @@
 import { PageHeader } from "./PageHeader";
 import { ScrollReveal } from "./ScrollReveal";
-import { useAccessModal } from "../features/access/AccessModal";
+import { useSignUpModal } from "../features/access/SignUpModal";
 
 type FaqItem = {
   question: string;
@@ -64,7 +64,7 @@ const faqs: FaqItem[] = [
   {
     question: "Is Chronos available today?",
     answer:
-      "Chronos is in private beta. The core idea → decision loop works; see Docs → Beta limitations for current edges.",
+      "Chronos is in public beta. The core idea → decision loop works; see Docs → Beta limitations for current edges.",
   },
   {
     question: "What is CLAB?",
@@ -79,7 +79,7 @@ const faqs: FaqItem[] = [
 ];
 
 export function FaqPage() {
-  const { openAccessModal } = useAccessModal();
+  const { openSignUpModal } = useSignUpModal();
 
   return (
     <>
@@ -143,15 +143,15 @@ export function FaqPage() {
                 Still curious?
               </div>
               <p className="text-[15px] leading-[1.65] text-ink-dim">
-                Chronos is in private beta. Request access to explore simulations in your own
+                Chronos is in public beta. Create an account and explore simulations in your own
                 workspace.
               </p>
               <button
                 type="button"
-                onClick={openAccessModal}
+                onClick={openSignUpModal}
                 className="mt-4 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-bg transition hover:bg-chronos"
               >
-                Request access
+                Join public beta
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path
                     d="M2 6h8M6 2l4 4-4 4"

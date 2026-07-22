@@ -8,7 +8,7 @@ import {
   publicStartupSimulator,
 } from "../../../application/planner/publicStartupSimulator";
 import { StartupLaunchPlanner } from "../../../application/planner/StartupLaunchPlanner";
-import { useAccessModal } from "../access/AccessModal";
+import { useSignUpModal } from "../access/SignUpModal";
 import { ScrollReveal } from "../../components/ScrollReveal";
 
 const EXAMPLES = [
@@ -434,7 +434,7 @@ function ResultsPanel({
   source: "cache" | "computed" | null;
   onReset: () => void;
 }) {
-  const { openAccessModal } = useAccessModal();
+  const { openSignUpModal } = useSignUpModal();
   const ranked = useMemo(() => {
     const all = [result.bestPath, ...result.alternatives];
     const maxArr = Math.max(...all.map((p) => p.arr), 1);
@@ -684,7 +684,7 @@ function ResultsPanel({
         </button>
         <button
           type="button"
-          onClick={openAccessModal}
+          onClick={openSignUpModal}
           className="inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-medium text-bg transition hover:bg-chronos"
         >
           Continue in workspace

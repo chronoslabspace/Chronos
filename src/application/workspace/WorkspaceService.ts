@@ -27,6 +27,8 @@ export type WorkspaceCloudStore = {
   list(ownerId: string): Promise<WorkspaceRecord[]>;
   load(ownerId: string, workspaceId?: string): Promise<WorkspaceHome | null>;
   save(home: WorkspaceHome): Promise<void>;
+  deleteKnowledge?(knowledgeId: string): Promise<void>;
+  deleteNote?(noteId: string): Promise<void>;
 };
 
 function nowIso() {
@@ -304,7 +306,7 @@ export class WorkspaceService {
     if (!home.knowledge.some((k) => k.id === knowledgeId)) {
       throw new Error("Knowledge item not found.");
     }
-    if (this.remote) {
+    if (this.remote?.deleteKnowledge) {
       try {
         await this.remote.deleteKnowledge(knowledgeId);
       } catch (err) {
@@ -352,7 +354,7 @@ export class WorkspaceService {
     if (!home.notes.some((n) => n.id === noteId)) {
       throw new Error("Note not found.");
     }
-    if (this.remote) {
+    if (this.remote?.deleteNote) {
       try {
         await this.remote.deleteNote(noteId);
       } catch (err) {

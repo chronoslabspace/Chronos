@@ -149,16 +149,14 @@ export function HomeLiveDemo() {
             {PIPELINE.map((step, i) => {
               const active = status === "planning" && pipelineStep === i;
               const done =
-                status === "complete" ||
-                (status === "planning" && pipelineStep > i) ||
-                (status === "complete" && true);
+                status === "complete" || (status === "planning" && pipelineStep > i);
               return (
                 <div
                   key={step.id}
                   className={`rounded-md border px-2 py-2 text-center transition ${
                     active
                       ? "border-chronos/50 bg-chronos/10 text-chronos"
-                      : done && status !== "idle"
+                      : done
                         ? "border-chronos/25 bg-chronos/5 text-chronos/80"
                         : "border-line text-ink-faint"
                   }`}
