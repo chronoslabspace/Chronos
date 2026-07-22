@@ -35,20 +35,31 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
+      # Vite prefers process env over .env.production. Empty Actions secrets become
+      # "" and would wipe committed public client keys — only export non-empty values.
       - name: Build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          SECRET_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SECRET_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          SECRET_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
         run: |
-          # Secrets override .env.production when set; otherwise Vite uses committed public client env.
-          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
-            echo "::notice::Supabase Actions secrets unset — using .env.production if present"
-          fi
-          if [ -z "$VITE_SENTRY_DSN" ]; then
-            echo "::notice::VITE_SENTRY_DSN secret unset — using .env.production if present"
+          if [ -n "$SECRET_SUPABASE_URL" ]; then
+            export VITE_SUPABASE_URL="$SECRET_SUPABASE_URL"
+            echo "Using VITE_SUPABASE_URL from Actions secrets"
           else
-            echo "Sentry DSN secret present — overrides .env.production for this build"
+            echo "::notice::VITE_SUPABASE_URL secret unset — Vite will use .env.production if present"
+          fi
+          if [ -n "$SECRET_SUPABASE_ANON_KEY" ]; then
+            export VITE_SUPABASE_ANON_KEY="$SECRET_SUPABASE_ANON_KEY"
+            echo "Using VITE_SUPABASE_ANON_KEY from Actions secrets"
+          else
+            echo "::notice::VITE_SUPABASE_ANON_KEY secret unset — Vite will use .env.production if present"
+          fi
+          if [ -n "$SECRET_SENTRY_DSN" ]; then
+            export VITE_SENTRY_DSN="$SECRET_SENTRY_DSN"
+            echo "Using VITE_SENTRY_DSN from Actions secrets"
+          else
+            echo "::notice::VITE_SENTRY_DSN secret unset — Vite will use .env.production if present"
           fi
           npm run build
 

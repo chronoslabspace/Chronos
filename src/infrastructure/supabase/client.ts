@@ -4,16 +4,30 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+/**
+ * Trim + treat empty string as missing. CI can inject empty VITE_* secrets that
+ * override .env.production; `??` does not fall back for `""`.
+ */
+function envString(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+const supabaseUrl = envString(import.meta.env.VITE_SUPABASE_URL);
 /** Prefer publishable key (sb_publishable_...); legacy anon JWT still accepted. */
 const supabaseAnonKey =
-  import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  envString(import.meta.env.VITE_SUPABASE_ANON_KEY) ||
+  envString(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
 
-if (!supabaseUrl || !supabaseAnonKey) {
+/** True when real project URL + anon/publishable key are present. */
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+
+if (!isSupabaseConfigured) {
   console.warn(
-    "[chronos] Missing Supabase credentials. Request Access submissions will not be persisted. " +
-      "See .env.example for required variables."
+    "[chronos] Missing Supabase credentials. Auth and cloud persistence are disabled. " +
+      "Copy .env.example → .env (or set VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY). " +
+      "Local stack: npm run supabase:start && npm run supabase:env"
   );
 }
 
@@ -25,10 +39,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
  *   path (`/auth/callback`) is preserved when the client clears the hash.
  *   PKCE is avoided for email magic links: it requires a same-browser code
  *   verifier, so opening the link from mail apps / other devices always fails.
+ *
+ * Placeholder URL/key only when misconfigured so module load never throws;
+ * callers should check `isSupabaseConfigured` before cloud writes.
  */
 export const supabase = createClient(
-  supabaseUrl ?? "https://placeholder.supabase.co",
-  supabaseAnonKey ?? "placeholder",
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-anon-key",
   {
     auth: {
       persistSession: true,
