@@ -65,14 +65,14 @@ export function HomeLiveDemo() {
         window.setTimeout(() => {
           setActiveTask(i);
           setPipelineStep(Math.min(3, Math.floor((i / Math.max(taskCount - 1, 1)) * 3)));
-          setFuturesSeen(Math.floor(((i + 1) / taskCount) * 820) + 40);
+          setFuturesSeen(Math.floor(((i + 1) / taskCount) * 52) + 4);
         }, 180 + i * 220)
       );
     }
 
     const rankTimer = window.setTimeout(() => {
       setPipelineStep(3);
-      setFuturesSeen(1000);
+      setFuturesSeen(64);
     }, 180 + taskCount * 220 + 200);
 
     return () => {
@@ -384,7 +384,7 @@ function DemoPlanning({ futures, step }: { futures: number; step: number }) {
       <div className="mt-6 h-1 overflow-hidden rounded-full bg-line">
         <div
           className="h-full rounded-full bg-chronos transition-[width] duration-300"
-          style={{ width: `${Math.min(100, (futures / 1000) * 100)}%` }}
+          style={{ width: `${Math.min(100, (futures / 64) * 100)}%` }}
         />
       </div>
       <div className="mt-6 space-y-2">

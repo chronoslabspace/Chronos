@@ -6,6 +6,7 @@ import {
   collapse,
   createEngine,
   reset,
+  run,
 } from "../../application/chronos/engine";
 import type { Engine } from "../../domain/chronos/types";
 import type { CollapseStrategy } from "../../domain/chronos/types";
@@ -73,10 +74,7 @@ export function LanguageSection() {
 
   const runAll = () => {
     if (!engine) return;
-    let eng = fork(engine);
-    eng = evaluate(eng);
-    eng = collapse(eng, strategy);
-    setEngine(eng);
+    setEngine(run(engine, strategy));
   };
 
   return (

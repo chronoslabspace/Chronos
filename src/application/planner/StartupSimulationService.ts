@@ -31,7 +31,10 @@ export class StartupSimulationService {
       return { result: cached.value, cacheKey, source: "cache" };
     }
 
-    const result = simulate(request.prompt);
+    const budgetRaw = request.configuration?.futureCount;
+    const sampleBudget =
+      typeof budgetRaw === "number" && Number.isFinite(budgetRaw) ? budgetRaw : undefined;
+    const result = simulate(request.prompt, { sampleBudget });
     await this.cache.set({
       key: cacheKey,
       value: result,

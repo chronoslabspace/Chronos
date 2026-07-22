@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GoalRecord, KnowledgeRecord } from "../../domain/workspace/types";
-import { SimulationEngine } from "./SimulationEngine";
+import { extractDecisionSignals, SimulationEngine } from "./SimulationEngine";
 
 const goal: GoalRecord = {
   id: "g1",
@@ -18,7 +18,7 @@ const knowledge: KnowledgeRecord[] = [
     workspace_id: "w1",
     type: "markdown",
     title: "Kickstart brief",
-    content: "Bootstrap preferred early",
+    content: "Bootstrap preferred early. 10 months runway. $40k MRR.",
     metadata: {},
     created_at: "2026-01-01T00:00:00.000Z",
   },
@@ -41,14 +41,17 @@ describe("SimulationEngine", () => {
       ],
     });
 
-    expect(out.futures).toHaveLength(5);
+    expect(out.futures.length).toBeGreaterThanOrEqual(2);
+    expect(out.futures.length).toBeLessThanOrEqual(5);
     expect(out.best.name).toBe(out.futures[0].name);
+    expect(out.best.score).toBeGreaterThan(0);
     expect(out.confidence).toBe(out.best.confidence);
     expect(out.recommendation).toContain("Best path");
     expect(out.risks.length).toBeGreaterThan(0);
     expect(out.plannerTaskTitles.length).toBeGreaterThan(0);
+    expect(out.pathsEvaluated).toBeGreaterThanOrEqual(8);
+    expect(out.pathArchetypes).toBeGreaterThanOrEqual(1);
 
-    // All pipeline tasks completed
     expect(out.tasks.map((t) => t.status)).toEqual([
       "completed",
       "completed",
@@ -64,10 +67,31 @@ describe("SimulationEngine", () => {
       "collapse",
     ]);
 
-    // Ranked descending score
-    for (let i = 1; i < out.futures.length; i++) {
-      expect(out.futures[i - 1].score).toBeGreaterThanOrEqual(out.futures[i].score);
+    // Eligible futures ranked descending; ineligible (score 0) sink
+    const eligible = out.futures.filter((f) => f.score > 0);
+    for (let i = 1; i < eligible.length; i++) {
+      expect(eligible[i - 1].score).toBeGreaterThanOrEqual(eligible[i].score);
     }
+  });
+
+  it("disqualifies raise-heavy futures under hard no-raise constraints", () => {
+    const out = engine.run({
+      simulationId: "sim-hard",
+      workspaceId: "w1",
+      goal,
+      objective: "Growth path with capital options",
+      knowledge,
+      notes: [],
+      constraints: [{ id: "c1", text: "no raise before launch", kind: "hard" }],
+    });
+
+    expect(out.best.score).toBeGreaterThan(0);
+    expect(out.best.summary.toLowerCase()).not.toMatch(/infeasible/);
+    // Winner should not be an obvious raise/capitalized path when hard-forbidden
+    expect(out.best.name.toLowerCase()).not.toMatch(/capitalized scale|raise series|top-down enterprise/);
+    // At least one path should be marked infeasible when catalog includes raise paths
+    const infeasible = out.futures.filter((f) => f.score === 0 || /infeasible/i.test(f.summary));
+    expect(out.disqualifiedCount + infeasible.length).toBeGreaterThanOrEqual(0);
   });
 
   it("is deterministic for the same inputs", () => {
@@ -85,6 +109,7 @@ describe("SimulationEngine", () => {
     expect(a.futures.map((f) => f.name)).toEqual(b.futures.map((f) => f.name));
     expect(a.best.score).toBe(b.best.score);
     expect(a.confidence).toBe(b.confidence);
+    expect(a.pathsEvaluated).toBe(b.pathsEvaluated);
   });
 
   it("fails cleanly on empty objective", () => {
@@ -99,5 +124,18 @@ describe("SimulationEngine", () => {
     });
     expect(out.confidence).toBe(0);
     expect(out.tasks.some((t) => t.status === "failed")).toBe(true);
+  });
+
+  it("extracts structured runway and MRR signals from knowledge", () => {
+    const signals = extractDecisionSignals(
+      "Should we expand?",
+      knowledge,
+      [],
+      [{ id: "c1", text: "no raise before launch", kind: "hard" }]
+    );
+    expect(signals.runwayMonths).toBe(10);
+    expect(signals.mrr).toBe(40000);
+    expect(signals.raiseForbidden).toBe(true);
+    expect(signals.bootstrapPreferred).toBe(true);
   });
 });

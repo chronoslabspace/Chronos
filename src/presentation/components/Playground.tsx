@@ -35,13 +35,13 @@ export function Playground() {
       const interval = setInterval(() => {
         const elapsed = Date.now() - start;
         const progress = Math.min(elapsed / (PHASE_DURATION * 0.9), 1);
-        setBranchCount(Math.floor(progress * 10000));
+        setBranchCount(Math.floor(progress * 64));
       }, 30);
       return () => clearInterval(interval);
     } else if (phase === "idle") {
       setBranchCount(0);
     } else {
-      setBranchCount(10000);
+      setBranchCount(64);
     }
   }, [phase]);
 
@@ -172,7 +172,7 @@ export function Playground() {
                   label="Active branches"
                   value={phase === "idle" ? "—" : branchCount.toLocaleString()}
                   color="#c6f0ff"
-                  progress={phase === "fork" ? branchCount / 10000 : phase === "idle" ? 0 : 1}
+                  progress={phase === "fork" ? branchCount / 64 : phase === "idle" ? 0 : 1}
                 />
                 <Metric
                   label="Evaluation"

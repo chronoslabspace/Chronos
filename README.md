@@ -151,7 +151,17 @@ supabase/
 
 Architecture rules: [ARCHITECTURE.md](./ARCHITECTURE.md)  
 Performance notes: [PERFORMANCE.md](./PERFORMANCE.md)  
-Testing strategy: [TESTING.md](./TESTING.md)
+Testing strategy: [TESTING.md](./TESTING.md)  
+Agent skills / lifecycle: [AGENTS.md](./AGENTS.md)
+
+### AI agent skills
+
+This repo vendors [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (24 lifecycle skills) plus Supabase skills under [`.agents/skills/`](./.agents/skills/). Slash commands: `/spec`, `/plan`, `/build`, `/test`, `/review`, `/code-simplify`, `/ship`, `/webperf`.
+
+```bash
+npx skills experimental_install   # restore from skills-lock.json
+npx skills update -p -y           # refresh project skills
+```
 
 ---
 

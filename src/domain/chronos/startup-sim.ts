@@ -1,9 +1,8 @@
 // Chronos Startup Simulator
 // =========================
-// Deterministic simulator that takes an idea string and returns
-// 1000 simulated futures collapsed into a best path + alternatives.
-//
-// The same input always produces the same output (deterministic hash-based).
+// Deterministic Monte Carlo over category path templates.
+// Sample budget is real (pathsEvaluated === samples drawn), not marketing fiction.
+// Same idea + budget always yields the same output (hash-seeded RNG).
 
 export type Milestone = {
   month: number;
@@ -32,9 +31,18 @@ export type SimulationResult = {
   categoryLabel: string;
   bestPath: Path;
   alternatives: Path[];
+  /** Distinct strategy archetypes in the category catalog. */
   totalPaths: number;
+  /** Monte Carlo samples actually scored (honest; equals sample budget used). */
   pathsEvaluated: number;
   bestBranchId: string;
+  /** Expected ARR of the winning sample (arr * probability). */
+  bestExpectedValue: number;
+};
+
+export type SimulateOptions = {
+  /** Total Monte Carlo draws across templates. Default 64. Clamped 8–256. */
+  sampleBudget?: number;
 };
 
 // ---- Hash + seeded RNG ----
@@ -300,53 +308,92 @@ const PATHS: Record<string, PathTemplate[]> = {
 
 // ---- Main simulator ----
 
-export function simulate(idea: string): SimulationResult {
+const DEFAULT_SAMPLE_BUDGET = 64;
+
+type PathSample = Path & { ev: number; templateName: string };
+
+function clampBudget(n: number | undefined): number {
+  const raw = typeof n === "number" && Number.isFinite(n) ? Math.floor(n) : DEFAULT_SAMPLE_BUDGET;
+  return Math.max(8, Math.min(256, raw));
+}
+
+function samplePath(
+  template: PathTemplate,
+  rng: () => number,
+  hash: number,
+  sampleIndex: number
+): PathSample {
+  const arr = template.arrRange[0] + rng() * (template.arrRange[1] - template.arrRange[0]);
+  const probability =
+    template.probRange[0] + rng() * (template.probRange[1] - template.probRange[0]);
+  const monthsToPmf = 6 + Math.floor(rng() * 8);
+  const cac = 400 + Math.floor(rng() * 2000);
+  const ltv = 8000 + Math.floor(rng() * 20000);
+  const burn = 40000 + Math.floor(rng() * 80000);
+  const roundedArr = Math.round(arr / 100000) * 100000;
+  const roundedProb = Math.round(probability * 1000) / 1000;
+  return {
+    id: `0x${((hash + sampleIndex * 17) >>> 0).toString(16).padStart(4, "0").slice(-4)}`,
+    name: template.name,
+    thesis: template.thesis,
+    milestones: template.milestones,
+    highlights: template.highlights,
+    risks: template.risks,
+    arr: roundedArr,
+    probability: roundedProb,
+    monthsToPmf,
+    cac,
+    ltv,
+    burn,
+    templateName: template.name,
+    ev: roundedArr * roundedProb,
+  };
+}
+
+export function simulate(idea: string, options: SimulateOptions = {}): SimulationResult {
   const hash = hashString(idea);
   const rng = mulberry32(hash);
   const { category, label } = categorize(idea);
-
-  // Pick paths for this category
   const categoryPaths = PATHS[category] ?? PATHS["b2b-saas"];
+  const budget = clampBudget(options.sampleBudget);
+  const samplesPerTemplate = Math.max(1, Math.floor(budget / categoryPaths.length));
+  const pathsEvaluated = samplesPerTemplate * categoryPaths.length;
 
-  // Shuffle + pick best (by probability-weighted expected value)
-  const shuffled = [...categoryPaths].sort(() => rng() - 0.5);
-  const withStats = shuffled.map((p, i) => {
-    const arr = p.arrRange[0] + rng() * (p.arrRange[1] - p.arrRange[0]);
-    const probability = p.probRange[0] + rng() * (p.probRange[1] - p.probRange[0]);
-    const monthsToPmf = 6 + Math.floor(rng() * 8);
-    const cac = 400 + Math.floor(rng() * 2000);
-    const ltv = 8000 + Math.floor(rng() * 20000);
-    const burn = 40000 + Math.floor(rng() * 80000);
-    return {
-      ...p,
-      id: `0x${(hash + i * 7).toString(16).padStart(4, "0").slice(-4)}`,
-      arr: Math.round(arr / 100000) * 100000,
-      probability: Math.round(probability * 1000) / 1000,
-      monthsToPmf,
-      cac,
-      ltv,
-      burn,
-      ev: arr * probability,
-    };
-  });
+  // Monte Carlo: draw samplesPerTemplate futures per archetype, score EV = ARR × P.
+  const allSamples: PathSample[] = [];
+  let sampleIndex = 0;
+  for (const template of categoryPaths) {
+    for (let s = 0; s < samplesPerTemplate; s++) {
+      allSamples.push(samplePath(template, rng, hash, sampleIndex));
+      sampleIndex += 1;
+    }
+  }
 
-  // Best = highest expected value
-  withStats.sort((a, b) => b.ev - a.ev);
-  const best = withStats[0];
-  const alternatives = withStats.slice(1, 4);
+  allSamples.sort((a, b) => b.ev - a.ev || b.probability - a.probability);
 
-  // Best branch id
-  const bestBranchId = `0x${(hash % 65536).toString(16).padStart(4, "0")}`;
+  // Collapse: best sample overall, then best remaining sample per other archetype.
+  const best = allSamples[0];
+  const seen = new Set<string>([best.templateName]);
+  const alternatives: PathSample[] = [];
+  for (const sample of allSamples) {
+    if (seen.has(sample.templateName)) continue;
+    seen.add(sample.templateName);
+    alternatives.push(sample);
+    if (alternatives.length >= 3) break;
+  }
+
+  const strip = ({ ev: _ev, templateName: _t, ...path }: PathSample): Path => path;
 
   return {
     idea,
     category,
     categoryLabel: label,
-    bestPath: best,
-    alternatives,
-    totalPaths: 1000,
-    pathsEvaluated: 1000,
-    bestBranchId,
+    bestPath: strip(best),
+    alternatives: alternatives.map(strip),
+    totalPaths: categoryPaths.length,
+    pathsEvaluated,
+    bestBranchId: best.id,
+    bestExpectedValue: Math.round(best.ev),
   };
 }
 

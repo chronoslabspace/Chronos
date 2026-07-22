@@ -4,6 +4,7 @@ import {
   evaluate,
   collapse,
   reset,
+  run,
   createEngine,
 } from "../../application/chronos/engine";
 import {
@@ -128,6 +129,14 @@ export function Product() {
             done={false}
             color="#ffd7a3"
           />
+          <button
+            type="button"
+            onClick={() => setEngine(run(engine, strategy))}
+            disabled={engine.phase === "collapsed"}
+            className="rounded-md border border-chronos/40 bg-chronos/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-chronos transition hover:bg-chronos/15 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Run all
+          </button>
           <div className="ml-auto flex items-center gap-3">
             <div className="flex items-center gap-2">
               <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint">

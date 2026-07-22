@@ -37,8 +37,12 @@ describe("Chronos simulation integration", () => {
 
     expect(second).toEqual(first);
     expect(first.category).toBe("productivity");
-    expect(first.totalPaths).toBe(1000);
-    expect(first.pathsEvaluated).toBe(1000);
+    // Honest counts: archetypes in catalog, samples actually scored
+    expect(first.totalPaths).toBeGreaterThanOrEqual(1);
+    expect(first.totalPaths).toBeLessThanOrEqual(8);
+    expect(first.pathsEvaluated).toBeGreaterThanOrEqual(8);
+    expect(first.pathsEvaluated).toBeLessThanOrEqual(256);
+    expect(first.bestExpectedValue).toBeGreaterThan(0);
     expect(first.bestPath.probability).toBeGreaterThan(0);
     expect(first.bestPath.arr).toBeGreaterThan(0);
     expect(first.bestPath.milestones.map((milestone) => milestone.month)).toEqual([
@@ -50,5 +54,13 @@ describe("Chronos simulation integration", () => {
       18,
     ]);
     expect(first.alternatives.length).toBeGreaterThan(0);
+  });
+
+  it("scales sample budget and remains deterministic", () => {
+    const idea = "fintech payments for freelancers";
+    const small = simulate(idea, { sampleBudget: 16 });
+    const large = simulate(idea, { sampleBudget: 128 });
+    expect(small.pathsEvaluated).toBeLessThan(large.pathsEvaluated);
+    expect(simulate(idea, { sampleBudget: 16 })).toEqual(small);
   });
 });

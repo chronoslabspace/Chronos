@@ -14,9 +14,10 @@ export function createPublicStartupRequest(prompt: string) {
   return {
     prompt,
     workspaceId: "public-startup-simulator",
-    modelVersion: "startup-simulator-v1",
+    // v2: honest Monte Carlo budget (pathsEvaluated === samples scored)
+    modelVersion: "startup-simulator-v2",
     configuration: {
-      futureCount: 1000,
+      futureCount: 64,
       horizonMonths: 18,
       ranking: "expected-arr",
     },

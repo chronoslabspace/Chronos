@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { collapse, createEngine, evaluate, fork } from "../../../application/chronos/engine";
+import { createEngine, run } from "../../../application/chronos/engine";
 import { SimulationLearningService } from "../../../application/workspace/SimulationLearningService";
 import { capabilityWorkloads, getCapabilityWorkload } from "../../../domain/chronos/capabilities";
 
@@ -8,8 +8,8 @@ export function WorkspaceLearningDashboard() {
   const [workloadId, setWorkloadId] = useState(capabilityWorkloads[0].id);
   const workload = useMemo(() => getCapabilityWorkload(workloadId), [workloadId]);
   const learning = useMemo(() => {
-    const simulation = collapse(
-      evaluate(fork(createEngine(workload.scenario.id, workload.scenario.initialState, workload.scenario.actions))),
+    const simulation = run(
+      createEngine(workload.scenario.id, workload.scenario.initialState, workload.scenario.actions),
       "max-utility"
     );
     return new SimulationLearningService().derive(simulation, {

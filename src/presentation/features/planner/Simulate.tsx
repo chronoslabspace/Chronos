@@ -88,7 +88,8 @@ export function Simulate() {
       // Ease-out so collapse feels deliberate
       const eased = 1 - Math.pow(1 - p, 1.6);
       setProgress(eased);
-      setBranchCounter(Math.floor(eased * 1000));
+      // Animate toward real sample budget (honest MC draws, not marketing 1000)
+      setBranchCounter(Math.floor(eased * 64));
 
       if (Math.random() < 0.12) {
         const id = `0x${Math.floor(Math.random() * 65536)
@@ -456,9 +457,13 @@ function ResultsPanel({
         <p className="mt-2 max-w-3xl text-[15px] leading-[1.7] text-ink">
           <span className="font-medium text-ink">{result.bestPath.name}</span>
           {" — "}
-          {result.bestPath.thesis} Chronos ranked this highest across{" "}
-          {result.totalPaths.toLocaleString()} simulated futures
-          {result.pathsEvaluated ? ` (${result.pathsEvaluated.toLocaleString()} evaluated)` : ""}.
+          {result.bestPath.thesis} Ranked by expected value (ARR × probability) across{" "}
+          {result.pathsEvaluated.toLocaleString()} Monte Carlo samples
+          {result.totalPaths
+            ? ` over ${result.totalPaths.toLocaleString()} strategy archetype${result.totalPaths === 1 ? "" : "s"}`
+            : ""}
+          .
+
         </p>
       </div>
 
@@ -644,7 +649,8 @@ function ResultsPanel({
       <div className="rounded-2xl border border-line bg-bg-soft p-6 sm:p-8">
         <div className="mb-6">
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-faint">
-            {result.totalPaths} paths evaluated · {result.alternatives.length} alternatives
+            {result.pathsEvaluated} samples · {result.totalPaths} archetypes ·{" "}
+            {result.alternatives.length} alternatives
           </div>
           <div className="mt-1 font-serif text-2xl text-ink">
             Other futures that almost won<span className="text-ink-faint">.</span>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { getAgent } from "../../domain/chronos/agents";
 import { getScenario } from "../../domain/chronos/scenarios";
-import { collapse, createEngine, evaluate, fork, reset } from "./engine";
+import { collapse, createEngine, evaluate, fork, reset, run, scoreBranch } from "./engine";
 
 function robotArmSimulation() {
   const scenario = getScenario("robot-arm");
@@ -81,5 +82,29 @@ describe("Temporal Decision Engine", () => {
     expect(resetSimulation.branches).toHaveLength(0);
     expect(resetSimulation.world).toEqual(simulation.world);
     expect(resetSimulation.timeline.committedBranchId).toBeUndefined();
+  });
+
+  it("run() advances idle → collapsed in one call", () => {
+    const completed = run(robotArmSimulation(), "max-utility");
+    expect(completed.phase).toBe("collapsed");
+    expect(completed.winner?.actionId).toBe("grasp-direct");
+  });
+
+  it("scores agent domains differently from physical utility", () => {
+    const forge = getAgent("forge");
+    const engine = createEngine(forge.scenario.id, forge.scenario.initialState, forge.scenario.actions);
+    const evaluated = evaluate(fork(engine));
+    const ship = evaluated.branches.find((b) => b.actionId === "ship-as-is")!;
+    const tests = evaluated.branches.find((b) => b.actionId === "write-tests")!;
+
+    // Domain scorer produces in-range scores with agent-specific reasons
+    expect(ship.score).toBeGreaterThanOrEqual(0);
+    expect(ship.score).toBeLessThanOrEqual(1);
+    expect(tests.reason).toMatch(/coverage|quality|shipped|debt|deadline|risk|reward/i);
+
+    // Explicit domain score API is stable
+    const physical = scoreBranch(ship, "robot-arm").score;
+    const domain = scoreBranch(ship, "forge").score;
+    expect(domain).not.toBe(physical);
   });
 });
