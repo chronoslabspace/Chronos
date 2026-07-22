@@ -2,6 +2,7 @@ import {
   simulationEngine,
   type SimulationConstraint,
 } from "../simulation/SimulationEngine";
+import { sanitizeWorkspaceHomeIds } from "../../domain/workspace/persistedIds";
 import { snapshotKnowledgeUsed } from "../../domain/workspace/simulationReport";
 import { archiveGoalIfChanged } from "../../domain/workspace/workspaceMemory";
 import type {
@@ -716,7 +717,8 @@ export class WorkspaceService {
   }
 
   private normalize(home: WorkspaceHome): WorkspaceHome {
-    return {
+    // Repair legacy demo ids (0x…) so dual-write never hits Postgres 22P02.
+    const repaired = sanitizeWorkspaceHomeIds({
       ...home,
       goalHistory: home.goalHistory ?? [],
       knowledge: home.knowledge ?? [],
@@ -727,7 +729,10 @@ export class WorkspaceService {
         ...home.workspace,
         description: home.workspace.description ?? "",
       },
-      recentSimulations: (home.recentSimulations ?? []).map((sim) => ({
+    });
+    return {
+      ...repaired,
+      recentSimulations: (repaired.recentSimulations ?? []).map((sim) => ({
         ...sim,
         version: sim.version ?? 1,
         lineage_id: sim.lineage_id || sim.id,
