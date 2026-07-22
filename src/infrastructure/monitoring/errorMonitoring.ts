@@ -2,11 +2,9 @@
  * Error monitoring scaffold for public beta.
  *
  * - Always safe: never throws, never blocks UX
- * - When VITE_SENTRY_DSN is set, lazily loads @sentry/react
- * - Without DSN: console.error only (dev visibility)
- *
- * Install: npm i @sentry/react
- * Configure: VITE_SENTRY_DSN=https://...@o....ingest.sentry.io/...
+ * - Console-first for the client bundle; server-side Sentry wiring is a roadmap hook.
+ * - VITE_SENTRY_DSN is intentionally not imported here so missing optional SDKs cannot
+ *   break production builds.
  */
 
 type Severity = "fatal" | "error" | "warning" | "info";
@@ -17,22 +15,11 @@ type CaptureContext = {
   level?: Severity;
 };
 
-type SentryLike = {
-  init: (opts: Record<string, unknown>) => void;
-  captureException: (error: unknown, context?: Record<string, unknown>) => void;
-  captureMessage: (message: string, context?: Record<string, unknown>) => void;
-};
-
-let sentry: SentryLike | null = null;
 let initAttempted = false;
 
 function readDsn(): string | undefined {
-  try {
-    const dsn = import.meta.env.VITE_SENTRY_DSN;
-    return typeof dsn === "string" && dsn.trim() ? dsn.trim() : undefined;
-  } catch {
-    return undefined;
-  }
+  const dsn = import.meta.env.VITE_SENTRY_DSN;
+  return typeof dsn === "string" && dsn.trim() ? dsn.trim() : undefined;
 }
 
 /** Call once at app boot (main.tsx). */
@@ -48,26 +35,10 @@ export async function initErrorMonitoring(): Promise<void> {
     return;
   }
 
-  try {
-    const mod = await import("@sentry/react");
-    mod.init({
-      dsn,
-      environment: import.meta.env.MODE,
-      // Low sample rate for beta noise control; raise after launch ops stabilizes
-      tracesSampleRate: 0.1,
-      sendDefaultPii: false,
-    });
-    sentry = {
-      init: mod.init,
-      captureException: mod.captureException,
-      captureMessage: mod.captureMessage,
-    };
-  } catch (err) {
-    console.warn(
-      "[chronos] Sentry init failed (is @sentry/react installed?). Falling back to console.",
-      err
-    );
-  }
+  console.info(
+    "[chronos] error monitoring: VITE_SENTRY_DSN configured; client SDK integration is disabled in this build",
+    { environment: import.meta.env.MODE, dsnConfigured: Boolean(dsn) }
+  );
 }
 
 export function captureException(
@@ -76,12 +47,6 @@ export function captureException(
 ): void {
   try {
     console.error("[chronos]", error, context.extra ?? "");
-    if (!sentry) return;
-    sentry.captureException(error, {
-      level: context.level ?? "error",
-      tags: context.tags,
-      extra: context.extra,
-    });
   } catch {
     /* never throw from monitoring */
   }
@@ -92,20 +57,12 @@ export function captureMessage(
   context: CaptureContext = {}
 ): void {
   try {
-    if (import.meta.env.DEV || !sentry) {
-      console[context.level === "warning" ? "warn" : "error"]("[chronos]", message);
-    }
-    if (!sentry) return;
-    sentry.captureMessage(message, {
-      level: context.level ?? "info",
-      tags: context.tags,
-      extra: context.extra,
-    });
+    console[context.level === "warning" ? "warn" : "error"]("[chronos]", message);
   } catch {
     /* never throw from monitoring */
   }
 }
 
 export function isErrorMonitoringEnabled(): boolean {
-  return Boolean(sentry);
+  return false;
 }
