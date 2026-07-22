@@ -261,7 +261,7 @@ export function SimulationDetailPage() {
         </div>
         <h1 className="mt-2 font-serif text-3xl text-ink">{sim.title}</h1>
         <p className="mt-2 max-w-2xl text-sm text-ink-dim">
-          Compare futures → read the decision report → choose a path and save it to the timeline.
+          Simulation → decision report (keepable artifact) → save a path → log the outcome.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <StatusPill status={sim.status} />
@@ -328,15 +328,7 @@ export function SimulationDetailPage() {
         )}
       </div>
 
-      {/* 1 · Compare outcomes — the Chronos wow moment */}
-      <FutureComparison
-        futures={futures}
-        chosenFutureId={chosenId}
-        selectedId={activeFutureId}
-        onSelect={setSelectedFutureId}
-      />
-
-      {/* 2 · Decision report (shareable artifact) */}
+      {/* 1 · Decision report — the keepable product artifact */}
       {decisionReport && (
         <DecisionReportCard
           report={decisionReport}
@@ -355,7 +347,7 @@ export function SimulationDetailPage() {
         />
       )}
 
-      {/* 3 · Choose path · Save timeline */}
+      {/* 2 · Commit path to workspace memory */}
       <FutureTimelineCards
         goalTitle={home.goal?.title ?? sim.title}
         futures={futures}
@@ -367,6 +359,14 @@ export function SimulationDetailPage() {
           await chooseBestPath(sim.id, futureId);
           setSelectedFutureId(futureId);
         }}
+      />
+
+      {/* 3 · Compare alternatives (supporting, not the destination) */}
+      <FutureComparison
+        futures={futures}
+        chosenFutureId={chosenId}
+        selectedId={activeFutureId}
+        onSelect={setSelectedFutureId}
       />
 
       {/* Engine pipeline — secondary detail after the decision loop */}

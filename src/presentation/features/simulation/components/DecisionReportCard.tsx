@@ -15,12 +15,13 @@ type Props = {
 };
 
 /**
- * Screenshot-ready Decision Report — the artifact users remember and share.
- * Objective · Context · Alternatives · Trade-offs · Confidence · Path · Risks · Actions
+ * Decision Report — the keepable product artifact.
+ *
+ * Goal · Recommendation · Confidence · Evidence · Trade-offs · Risks · Next steps
  */
 export function DecisionReportCard({ report, compact, href, outcomeSlot }: Props) {
   const conf = confidencePercent(report.confidence);
-  const because =
+  const evidence =
     report.recommendedBecause?.length > 0
       ? report.recommendedBecause
       : report.why.slice(0, 4);
@@ -72,129 +73,110 @@ export function DecisionReportCard({ report, compact, href, outcomeSlot }: Props
       </div>
 
       <div className="divide-y divide-line">
-        {/* Recommended path + confidence + transparent why */}
-        <section className="px-5 py-6 sm:px-6">
-          <div className="font-mono text-[10px] uppercase text-ink-faint">Recommended path</div>
-          <h2 className={`mt-3 font-serif text-ink ${compact ? "text-2xl" : "text-3xl sm:text-4xl"}`}>
-            {report.recommended}
-          </h2>
-          {!compact && report.recommendedSummary ? (
-            <p className="mt-3 max-w-2xl text-sm text-ink-dim">{report.recommendedSummary}</p>
-          ) : null}
-          <div className="mt-5">
-            <div className="font-mono text-[10px] uppercase text-ink-faint">Confidence score</div>
-            <div className="mt-1 font-mono text-4xl text-chronos sm:text-5xl">{conf}</div>
-          </div>
-
-          {/* Trust block — every recommendation explains why */}
-          <div className="mt-6 rounded-xl border border-chronos/30 bg-chronos/5 px-4 py-4">
-            <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-chronos">
-              Recommended because
-            </div>
-            <ul className="mt-3 space-y-2">
-              {because.map((r) => (
-                <li key={r} className="flex gap-2.5 text-[15px] text-ink">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-chronos" />
-                  <span>{r}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {/* Objective */}
+        {/* Goal */}
         <section className="px-5 py-5 sm:px-6">
-          <div className="font-mono text-[10px] uppercase text-ink-faint">Objective</div>
-          <p className="mt-3 text-[15px] text-ink">{report.objective}</p>
+          <div className="font-mono text-[10px] uppercase text-ink-faint">Goal</div>
+          <p className="mt-3 font-serif text-xl text-ink sm:text-2xl">{report.decisionTitle}</p>
+          <p className="mt-2 text-[15px] text-ink-dim">{report.objective}</p>
           {report.objectiveDescription ? (
             <p className="mt-2 text-sm text-ink-dim">{report.objectiveDescription}</p>
           ) : null}
         </section>
 
-        {/* Context used */}
-        {!compact && (
-          <section className="px-5 py-5 sm:px-6">
-            <div className="font-mono text-[10px] uppercase text-ink-faint">Context used</div>
-            {report.contextUsed.length === 0 ? (
-              <p className="mt-3 text-sm text-ink-dim">No knowledge sources recorded for this run.</p>
-            ) : (
-              <ul className="mt-4 flex flex-wrap gap-2">
-                {report.contextUsed.map((c) => (
-                  <li
-                    key={c.id}
-                    className="rounded-full border border-line px-3 py-1.5 text-sm text-ink"
-                  >
-                    <span className="font-mono text-[10px] uppercase text-ink-faint">{c.type}</span>{" "}
-                    {c.title}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        )}
+        {/* Recommendation + confidence */}
+        <section className="px-5 py-6 sm:px-6">
+          <div className="font-mono text-[10px] uppercase text-ink-faint">Recommendation</div>
+          <h2 className={`mt-3 font-serif text-ink ${compact ? "text-2xl" : "text-3xl sm:text-4xl"}`}>
+            {report.recommended}
+          </h2>
+          {report.recommendedSummary ? (
+            <p className="mt-3 max-w-2xl text-sm text-ink-dim">{report.recommendedSummary}</p>
+          ) : null}
+          <div className="mt-5">
+            <div className="font-mono text-[10px] uppercase text-ink-faint">Confidence</div>
+            <div className="mt-1 font-mono text-4xl text-chronos sm:text-5xl">{conf}</div>
+          </div>
+        </section>
 
-        {/* Alternative futures */}
-        {!compact && report.alternatives.length > 0 && (
-          <section className="px-5 py-5 sm:px-6">
-            <div className="font-mono text-[10px] uppercase text-ink-faint">Alternative futures</div>
-            <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {report.alternatives.map((a) => (
-                <li
-                  key={a.id}
-                  className={`rounded-xl border px-4 py-3 ${
-                    a.isRecommended ? "border-chronos/40 bg-chronos/5" : "border-line"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-[10px] uppercase text-ink-faint">
-                      Future {a.label}
-                      {a.isRecommended ? " · pick" : ""}
-                    </span>
-                    {a.hook && (
-                      <span className="font-mono text-[10px] uppercase text-chronos">{a.hook}</span>
-                    )}
-                  </div>
-                  <div className="mt-1 text-[15px] text-ink">{a.name}</div>
-                  <div className="mt-2 font-mono text-sm text-chronos">
-                    {Math.round(a.confidence * 100)}%
-                    <span className="ml-2 text-ink-faint">
-                      risk {Math.round(a.risk * 100)}%
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* Trade-offs */}
-        {!compact && report.tradeoffs.length > 0 && (
-          <section className="px-5 py-5 sm:px-6">
-            <div className="font-mono text-[10px] uppercase text-ink-faint">Trade-offs</div>
-            <ul className="mt-4 space-y-2">
-              {report.tradeoffs.map((t) => (
-                <li key={t.futureId} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                  <span className="shrink-0 text-[15px] text-ink">{t.name}</span>
-                  <span className="text-sm text-ink-dim">{t.vsBest}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* Evidence detail (complements Recommended because) */}
-        {!compact && report.why.length > 0 && (
-          <section className="px-5 py-5 sm:px-6">
-            <div className="font-mono text-[10px] uppercase text-ink-faint">
-              Supporting evidence
-            </div>
+        {/* Evidence */}
+        <section className="px-5 py-5 sm:px-6">
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-chronos">
+            Evidence
+          </div>
+          <ul className="mt-3 space-y-2">
+            {evidence.map((r) => (
+              <li key={r} className="flex gap-2.5 text-[15px] text-ink">
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-chronos" />
+                <span>{r}</span>
+              </li>
+            ))}
+          </ul>
+          {!compact && report.why.length > 0 && (
             <ul className="mt-4 grid gap-2 sm:grid-cols-2">
               {report.why.map((w) => (
-                <li key={w} className="rounded-xl border border-line px-4 py-3 text-[15px] text-ink">
+                <li key={w} className="rounded-xl border border-line px-4 py-3 text-sm text-ink-dim">
                   {w}
                 </li>
               ))}
             </ul>
+          )}
+          {!compact && report.contextUsed.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {report.contextUsed.map((c) => (
+                <span
+                  key={c.id}
+                  className="rounded-full border border-line px-3 py-1.5 text-sm text-ink"
+                >
+                  <span className="font-mono text-[10px] uppercase text-ink-faint">{c.type}</span>{" "}
+                  {c.title}
+                </span>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Trade-offs (includes alternative futures) */}
+        {!compact && (report.tradeoffs.length > 0 || report.alternatives.length > 0) && (
+          <section className="px-5 py-5 sm:px-6">
+            <div className="font-mono text-[10px] uppercase text-ink-faint">Trade-offs</div>
+            {report.tradeoffs.length > 0 ? (
+              <ul className="mt-4 space-y-2">
+                {report.tradeoffs.map((t) => (
+                  <li key={t.futureId} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                    <span className="shrink-0 text-[15px] text-ink">{t.name}</span>
+                    <span className="text-sm text-ink-dim">{t.vsBest}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {report.alternatives.length > 0 ? (
+              <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                {report.alternatives.map((a) => (
+                  <li
+                    key={a.id}
+                    className={`rounded-xl border px-4 py-3 ${
+                      a.isRecommended ? "border-chronos/40 bg-chronos/5" : "border-line"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-[10px] uppercase text-ink-faint">
+                        {a.isRecommended ? "Recommended" : `Future ${a.label}`}
+                      </span>
+                      {a.hook && (
+                        <span className="font-mono text-[10px] uppercase text-chronos">{a.hook}</span>
+                      )}
+                    </div>
+                    <div className="mt-1 text-[15px] text-ink">{a.name}</div>
+                    <div className="mt-2 font-mono text-sm text-chronos">
+                      {Math.round(a.confidence * 100)}%
+                      <span className="ml-2 text-ink-faint">
+                        risk {Math.round(a.risk * 100)}%
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </section>
         )}
 
@@ -211,9 +193,9 @@ export function DecisionReportCard({ report, compact, href, outcomeSlot }: Props
           </ul>
         </section>
 
-        {/* Next actions */}
+        {/* Next steps */}
         <section className="px-5 py-5 sm:px-6">
-          <div className="font-mono text-[10px] uppercase text-ink-faint">Next actions</div>
+          <div className="font-mono text-[10px] uppercase text-ink-faint">Next steps</div>
           <ul className="mt-4 space-y-2">
             {report.nextActions.map((a) => (
               <li key={a} className="flex gap-3 text-[15px] text-ink">
@@ -227,23 +209,6 @@ export function DecisionReportCard({ report, compact, href, outcomeSlot }: Props
         {outcomeSlot ? (
           <section className="px-5 py-5 sm:px-6">{outcomeSlot}</section>
         ) : null}
-
-        {/* Compact context strip for dashboard */}
-        {compact && report.contextUsed.length > 0 && (
-          <section className="px-5 py-4 sm:px-6">
-            <div className="font-mono text-[10px] uppercase text-ink-faint">
-              Context · {report.contextUsed.length} source
-              {report.contextUsed.length === 1 ? "" : "s"}
-            </div>
-            <p className="mt-2 text-sm text-ink-dim">
-              {report.contextUsed
-                .slice(0, 4)
-                .map((c) => c.title)
-                .join(" · ")}
-              {report.contextUsed.length > 4 ? " · …" : ""}
-            </p>
-          </section>
-        )}
       </div>
 
       <div className="flex flex-wrap gap-2 border-t border-line px-5 py-4 sm:px-6">
@@ -254,18 +219,16 @@ export function DecisionReportCard({ report, compact, href, outcomeSlot }: Props
         >
           Copy report
         </button>
-        {!compact && (
-          <button
-            type="button"
-            onClick={download}
-            className="rounded-full border border-line px-4 py-2 text-sm text-ink hover:text-chronos"
-          >
-            Download .md
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={download}
+          className="rounded-full border border-line px-4 py-2 text-sm text-ink hover:text-chronos"
+        >
+          Download .md
+        </button>
         {href && (
           <Link to={href} className="ml-auto font-mono text-[11px] uppercase text-chronos">
-            Full simulation →
+            Open simulation →
           </Link>
         )}
       </div>

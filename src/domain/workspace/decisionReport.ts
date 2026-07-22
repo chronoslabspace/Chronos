@@ -406,55 +406,47 @@ function parseOutcomeFollowed(raw: unknown): OutcomeFollowed | null {
   return null;
 }
 
-/** Markdown export for sharing / archival. */
+/** Markdown export for sharing / archival — keepable product artifact. */
 export function exportDecisionReportMarkdown(report: DecisionReport): string {
   const conf = `${Math.round(report.confidence * 100)}%`;
   const lines = [
     `# Decision Report`,
     ``,
-    `**Objective:** ${report.objective}`,
-    report.objectiveDescription ? `**Context:** ${report.objectiveDescription}` : null,
-    `**Recommended path:** ${report.recommended}`,
-    `**Confidence:** ${conf}`,
-    report.pathSaved ? `**Status:** Path saved` : `**Status:** Engine recommendation`,
-    report.outcomeFollowed
-      ? `**Followed:** ${report.outcomeFollowed}${report.outcomeResult ? ` — ${report.outcomeResult}` : ""}`
-      : null,
-    ``,
-    `## Recommended because`,
-    ...report.recommendedBecause.map((r) => `- ${r}`),
-    ``,
-    `## Objective`,
-    report.objective,
+    `## Goal`,
+    report.decisionTitle,
+    report.objective !== report.decisionTitle ? report.objective : null,
     report.objectiveDescription ? report.objectiveDescription : null,
     ``,
-    `## Context used`,
-    ...(report.contextUsed.length
-      ? report.contextUsed.map((c) => `- [${c.type}] ${c.title}`)
-      : ["- (none recorded)"]),
+    `## Recommendation`,
+    report.recommended,
+    report.recommendedSummary ? report.recommendedSummary : null,
     ``,
-    `## Alternative futures`,
-    ...report.alternatives.map(
-      (a) =>
-        `- **Future ${a.label}: ${a.name}**${a.hook ? ` · ${a.hook}` : ""}${a.isRecommended ? " · recommended" : ""} — conf ${(a.confidence * 100).toFixed(0)}% · risk ${(a.risk * 100).toFixed(0)}%\n  ${a.summary || "—"}`
-    ),
+    `## Confidence`,
+    conf,
+    report.pathSaved ? `Status: Path saved` : `Status: Engine recommendation`,
+    report.outcomeFollowed
+      ? `Followed: ${report.outcomeFollowed}${report.outcomeResult ? ` — ${report.outcomeResult}` : ""}`
+      : null,
+    ``,
+    `## Evidence`,
+    ...report.recommendedBecause.map((r) => `- ${r}`),
+    ...report.why.map((w) => `- ${w}`),
+    ...(report.contextUsed.length
+      ? ["", "### Context used", ...report.contextUsed.map((c) => `- [${c.type}] ${c.title}`)]
+      : []),
     ``,
     `## Trade-offs`,
     ...(report.tradeoffs.length
       ? report.tradeoffs.map((t) => `- **${t.name}:** ${t.vsBest}`)
-      : ["- —"]),
-    ``,
-    `## Recommended path`,
-    report.recommended,
-    report.recommendedSummary ? report.recommendedSummary : null,
-    ``,
-    `## Why (detail)`,
-    ...report.why.map((w) => `- ${w}`),
+      : report.alternatives.map(
+          (a) =>
+            `- **${a.name}**${a.isRecommended ? " · recommended" : ""} — conf ${(a.confidence * 100).toFixed(0)}% · risk ${(a.risk * 100).toFixed(0)}%`
+        )),
     ``,
     `## Risks`,
     ...report.risks.map((r) => `- ${r}`),
     ``,
-    `## Next actions`,
+    `## Next steps`,
     ...report.nextActions.map((a, i) => `${i + 1}. ${a}`),
     ``,
     `---`,

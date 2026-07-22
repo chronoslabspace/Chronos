@@ -9,7 +9,7 @@ export function GoalCard({ goal, confidence }: Props) {
     <section className="group rounded-2xl border border-line bg-bg-soft/20 p-5 sm:p-6 hover:border-chronos/40">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint">
-          What am I working on?
+          Current goal
         </div>
         <Link
           to="/workspace/simulations?new=1"
