@@ -1,49 +1,41 @@
 import { Link } from "react-router-dom";
-import { confidencePercent } from "../../../../domain/workspace/seed";
-import { futureCardLabel } from "../../../../domain/workspace/timeline";
-import type { FutureRecord, SimulationRecord } from "../../../../domain/workspace/types";
+import { decisionHistoryPreview } from "../../../../domain/workspace/decisionHistory";
+import { formatRelativeTime } from "../../../../domain/workspace/pulse";
+import type { WorkspaceHome } from "../../../../domain/workspace/types";
 
-export function TimelinePreview({
-  latest,
-  futures,
-}: {
-  latest: SimulationRecord | null;
-  futures: readonly FutureRecord[];
-}) {
+/** HQ recent decision events — same model as Timeline page. */
+export function TimelinePreview({ home }: { home: WorkspaceHome }) {
+  const events = decisionHistoryPreview(home, 5);
   return (
-    <Link
-      to="/workspace/timeline"
-      className="group block rounded-2xl border border-line p-5 hover:border-chronos/40 sm:p-6"
+    <section
+      data-testid="decision-timeline-preview"
+      className="rounded-2xl border border-line p-5 sm:p-6"
     >
-      <div className="flex justify-between">
-        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint">
-          Timeline card
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
+          Recent timeline
         </div>
-        <span className="font-mono text-[10px] uppercase text-chronos">Timeline →</span>
+        <Link
+          to="/workspace/timeline"
+          className="font-mono text-[10px] uppercase tracking-[0.14em] text-chronos"
+        >
+          View Timeline →
+        </Link>
       </div>
-      {!latest || futures.length === 0 ? (
-        <p className="mt-3 text-sm text-ink-dim">Goal → Future A → B → C after a simulation.</p>
+      {events.length === 0 ? (
+        <p className="mt-4 text-sm text-ink-dim">No decision events yet.</p>
       ) : (
-        <div className="mt-5 space-y-0">
-          {futures.slice(0, 3).map((f, i) => (
-            <div key={f.id}>
-              {i > 0 && <div className="flex justify-center py-1 text-ink-faint">↓</div>}
-              <div className="flex items-center justify-between rounded-xl border border-line px-3 py-2.5">
-                <div>
-                  <div className="font-mono text-[9px] uppercase text-ink-faint">
-                    Future {futureCardLabel(i)}
-                    {i === 0 ? " ⭐" : ""}
-                  </div>
-                  <div className="truncate text-sm text-ink">{f.name}</div>
-                </div>
-                <span className="font-mono text-sm text-chronos">
-                  {confidencePercent(f.confidence)}
-                </span>
-              </div>
-            </div>
+        <ul className="mt-4 space-y-3">
+          {events.map((e) => (
+            <li key={e.id} className="flex items-start justify-between gap-3 text-sm">
+              <span className="text-ink">• {e.label}</span>
+              <span className="shrink-0 font-mono text-[10px] uppercase text-ink-faint">
+                {formatRelativeTime(e.at)}
+              </span>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-    </Link>
+    </section>
   );
 }

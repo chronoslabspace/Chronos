@@ -66,10 +66,8 @@ test.describe("Decision Workspace (authenticated)", () => {
     await page.locator("textarea").fill("Small team, limited runway, prefer bootstrap path.");
     await page.getByRole("button", { name: /add knowledge/i }).click();
 
-    // --- Dashboard (quiet HQ: current goal + decision workspace) ---
-    await expect(page.getByText(/current goal/i).first()).toBeVisible({
-      timeout: 15_000,
-    });
+    // --- Dashboard HQ: Decision Card + demoted goal ---
+    await expect(page.getByTestId("decision-card")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Launch CLAB public beta").first()).toBeVisible();
 
     // --- Generate futures ---
@@ -127,6 +125,20 @@ test.describe("Decision Workspace (authenticated)", () => {
     await page.getByRole("button", { name: /save outcome/i }).click();
     await expect(page.getByText(/shipped invite-only beta/i)).toBeVisible({
       timeout: 8_000,
+    });
+
+    // --- HQ Decision Card: review deep-link (no Accept commit on dashboard) ---
+    await page.goto("/workspace");
+    await expect(page.getByTestId("decision-card")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("decision-card-recommendation")).toBeVisible();
+    const hqCta = page.getByTestId("decision-card-cta");
+    await expect(hqCta).toBeVisible();
+    await expect(hqCta).not.toHaveText(/accept/i);
+    await expect(page.getByTestId("decision-timeline-preview")).toBeVisible();
+    // Primary CTA deep-links to simulation (review / log outcome)
+    await hqCta.click();
+    await expect(page).toHaveURL(/\/workspace\/simulations\/[a-z0-9-]+/i, {
+      timeout: 10_000,
     });
 
     // --- Memory retains decision ---
