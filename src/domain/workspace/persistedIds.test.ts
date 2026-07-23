@@ -86,4 +86,12 @@ describe("sanitizeWorkspaceHomeIds", () => {
     const child = nodes.find((n) => n.depth === 1)!;
     expect(child.parent_id).toBe(root.id);
   });
+
+  it("drops unmappable chosen_future_id as undefined (no collapse)", () => {
+    const dirty = baseHome();
+    dirty.recentSimulations[0].result.chosen_future_id = "0xdead-orphan";
+    dirty.futuresBySimulation["33333333-3333-4333-8333-333333333333"] = [];
+    const home = sanitizeWorkspaceHomeIds(dirty);
+    expect(home.recentSimulations[0].result.chosen_future_id).toBeUndefined();
+  });
 });
