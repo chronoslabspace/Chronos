@@ -50,7 +50,7 @@ export function evaluateBetaChecklist(
     {
       id: "decision",
       label: "Create first decision",
-      detail: "What are you trying to decide?",
+      detail: "What decision are you trying to make?",
       optional: false,
       done: hasDecision,
       href: "/workspace",
@@ -59,7 +59,7 @@ export function evaluateBetaChecklist(
     {
       id: "simulation",
       label: "Run first simulation",
-      detail: "Generate futures and compare trade-offs.",
+      detail: "Generate futures, evaluate trade-offs, read the Decision Report.",
       optional: false,
       done: hasSimulation,
       href: "/workspace/simulations?new=1",
@@ -67,8 +67,8 @@ export function evaluateBetaChecklist(
     },
     {
       id: "memory",
-      label: "Save memory",
-      detail: "Choose a path or log an outcome so Chronos remembers.",
+      label: "Save decision",
+      detail: "Choose a path so Chronos records the decision in workspace memory.",
       optional: false,
       done: hasSavedMemory,
       href: hasSimulation

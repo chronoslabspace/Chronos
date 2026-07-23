@@ -184,7 +184,7 @@ function buildRecommendation(
       (typeof latest.result.best_future === "string" && latest.result.best_future) ||
       "the top-ranked future";
     return {
-      text: `Compare futures and choose a path (engine suggests “${best}”).`,
+      text: `Choose a path to complete the decision (engine suggests “${best}”).`,
       href: `/workspace/simulations/${latest.id}`,
     };
   }

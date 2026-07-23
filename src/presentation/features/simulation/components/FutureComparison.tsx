@@ -29,7 +29,10 @@ export function FutureComparison({
 
   if (!futures.length) {
     return (
-      <section className="rounded-2xl border border-dashed border-line p-5">
+      <section
+        id="compare-alternatives"
+        className="scroll-mt-24 rounded-2xl border border-dashed border-line p-5"
+      >
         <div className="font-mono text-[10px] uppercase text-ink-faint">Future comparison</div>
         <p className="mt-3 text-sm text-ink-dim">No futures ranked yet.</p>
       </section>
@@ -39,7 +42,10 @@ export function FutureComparison({
   const maxConf = Math.max(...futures.map((f) => f.confidence), 0.01);
 
   return (
-    <section className="rounded-2xl border border-chronos/35 bg-gradient-to-b from-chronos/10 to-bg p-5 sm:p-6">
+    <section
+      id="compare-alternatives"
+      className="scroll-mt-24 rounded-2xl border border-chronos/35 bg-gradient-to-b from-chronos/10 to-bg p-5 sm:p-6"
+    >
       <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-chronos">
         Future comparison
       </div>

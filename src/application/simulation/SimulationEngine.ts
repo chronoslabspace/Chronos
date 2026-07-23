@@ -332,11 +332,26 @@ export class SimulationEngine {
 
   private createTaskShell(): SimulationTask[] {
     return [
-      { id: "plan", title: "Planner", status: "pending", phase: "plan" },
-      { id: "generate", title: "Generate futures", status: "pending", phase: "generate" },
-      { id: "evaluate", title: "Evaluate", status: "pending", phase: "evaluate" },
-      { id: "rank", title: "Rank", status: "pending", phase: "rank" },
-      { id: "collapse", title: "Best future", status: "pending", phase: "collapse" },
+      { id: "plan", title: "Understanding goal", status: "pending", phase: "plan" },
+      {
+        id: "generate",
+        title: "Generating candidate futures",
+        status: "pending",
+        phase: "generate",
+      },
+      {
+        id: "evaluate",
+        title: "Evaluating trade-offs",
+        status: "pending",
+        phase: "evaluate",
+      },
+      { id: "rank", title: "Ranking outcomes", status: "pending", phase: "rank" },
+      {
+        id: "collapse",
+        title: "Preparing decision report",
+        status: "pending",
+        phase: "collapse",
+      },
     ];
   }
 
