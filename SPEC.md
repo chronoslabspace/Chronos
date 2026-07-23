@@ -1,6 +1,7 @@
 # Spec: P1 — Decision pipeline UX (public beta)
 
-**Status:** Approved (product decisions locked) — ready for `/plan`  
+**Status:** Shipped (P1 on main)  
+**Follow-on:** Dashboard HQ / Decision Card → [SPEC-P2.md](./SPEC-P2.md)  
 **Scope:** Make existing intelligence *observable*. No new engines, no Phase 03 cloud.
 
 ## Locked product decisions
