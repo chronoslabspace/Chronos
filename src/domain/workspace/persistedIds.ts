@@ -85,10 +85,11 @@ export function sanitizeWorkspaceHomeIds(home: WorkspaceHome): WorkspaceHome {
     const chosenRaw = sim.result?.chosen_future_id;
     const chosen =
       typeof chosenRaw === "string"
-        ? idMap.get(chosenRaw) ?? (isUuid(chosenRaw) ? chosenRaw : null)
-        : null;
+        ? idMap.get(chosenRaw) ?? (isUuid(chosenRaw) ? chosenRaw : undefined)
+        : undefined;
 
-    if (chosen === chosenRaw || (chosen == null && chosenRaw == null)) {
+    // Collapse is binary: a concrete future UUID or absent — never null.
+    if (chosen === chosenRaw) {
       return sim;
     }
 
