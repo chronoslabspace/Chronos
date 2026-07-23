@@ -9,6 +9,7 @@ import { buildDecisionReport } from "../../../domain/workspace/decisionReport";
 import { groupSimulationsByHistory } from "../../../domain/workspace/simulationHistory";
 import { FutureTimelineCards } from "../timeline/FutureTimelineCards";
 import { useWorkspace } from "../workspace/WorkspaceContext";
+import { DecisionPipelineStrip } from "./components/DecisionPipelineStrip";
 import { DecisionReportCard } from "./components/DecisionReportCard";
 import { FutureComparison } from "./components/FutureComparison";
 import { OutcomeTracking } from "./components/OutcomeTracking";
@@ -365,10 +366,34 @@ export function SimulationDetailPage() {
         )}
       </div>
 
-      {/* 1 · Decision report — the keepable product artifact */}
+      {/* Decision pipeline — real engine phases + Decide gate */}
+      <DecisionPipelineStrip
+        tasks={tasks}
+        simulationStatus={sim.status}
+        chosenFutureId={chosenId}
+        replay={sim.status === "completed"}
+      />
+
+      {/* Decision report — product contract layout */}
       {decisionReport && (
         <DecisionReportCard
           report={decisionReport}
+          onSaveDecision={
+            !chosenId && futures[0]
+              ? async () => {
+                  const id = activeFutureId ?? futures[0]!.id;
+                  await chooseBestPath(sim.id, id);
+                  setSelectedFutureId(id);
+                }
+              : undefined
+          }
+          onCompare={() => {
+            document
+              .getElementById("compare-alternatives")
+              ?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          onRerun={() => void handleRerun()}
+          saveBusy={rerunning}
           outcomeSlot={
             <OutcomeTracking
               pathSaved={Boolean(chosenId)}
@@ -384,7 +409,15 @@ export function SimulationDetailPage() {
         />
       )}
 
-      {/* 2 · Commit path to workspace memory */}
+      {/* Compare alternatives (scroll target) */}
+      <FutureComparison
+        futures={futures}
+        chosenFutureId={chosenId}
+        selectedId={activeFutureId}
+        onSelect={setSelectedFutureId}
+      />
+
+      {/* Commit path to workspace memory (timeline cards) */}
       <FutureTimelineCards
         goalTitle={home.goal?.title ?? sim.title}
         futures={futures}
@@ -397,46 +430,6 @@ export function SimulationDetailPage() {
           setSelectedFutureId(futureId);
         }}
       />
-
-      {/* 3 · Compare alternatives (supporting, not the destination) */}
-      <FutureComparison
-        futures={futures}
-        chosenFutureId={chosenId}
-        selectedId={activeFutureId}
-        onSelect={setSelectedFutureId}
-      />
-
-      {/* Engine pipeline — secondary detail after the decision loop */}
-      <details className="rounded-2xl border border-line">
-        <summary className="cursor-pointer list-none px-4 py-3 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-faint marker:content-none [&::-webkit-details-marker]:hidden">
-          Engine pipeline · {tasks.length || 5} steps
-        </summary>
-        <ol className="space-y-2 border-t border-line px-4 py-4">
-          {(tasks.length
-            ? tasks
-            : [
-                { id: "1", title: "Planner", status: sim.status, phase: "plan" as const },
-                { id: "2", title: "Generate futures", status: sim.status, phase: "generate" as const },
-                { id: "3", title: "Evaluate", status: sim.status, phase: "evaluate" as const },
-                { id: "4", title: "Rank", status: sim.status, phase: "rank" as const },
-                { id: "5", title: "Best future", status: sim.status, phase: "collapse" as const },
-              ]
-          ).map((task, index) => (
-            <li
-              key={task.id}
-              className="flex items-center justify-between gap-3 border border-line px-3 py-2.5 text-sm"
-            >
-              <span className="text-ink">
-                <span className="mr-2 font-mono text-[10px] text-ink-faint">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                {task.title}
-              </span>
-              <StatusPill status={task.status} />
-            </li>
-          ))}
-        </ol>
-      </details>
 
       <Back to="/workspace/simulations" label="All simulations" />
     </div>
