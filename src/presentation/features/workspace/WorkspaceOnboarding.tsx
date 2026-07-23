@@ -207,10 +207,10 @@ export function WorkspaceOnboarding() {
               Step 3 · {home?.workspace.name}
             </div>
             <h1 className="mt-3 font-serif text-3xl text-ink">
-              What are you trying to decide?
+              What decision are you trying to make?
             </h1>
             <p className="mt-2 text-sm text-ink-dim">
-              Create your first decision — Chronos will simulate futures against it.
+              Frame a real decision under evaluation — Chronos will branch futures against it.
             </p>
             <form onSubmit={submitGoal} className="mt-8 space-y-4">
               <Field
