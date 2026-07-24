@@ -63,3 +63,39 @@ Start ambiguous sessions with `using-agent-skills` to map work to the right work
 - Prefer tests that prove decision outcomes (unit on engine/scorers; E2E on auth + decision loop).
 - Never commit secrets. Browser env is `VITE_SUPABASE_*` only; server secrets never use `VITE_`.
 - Empty/missing Supabase env must not crash the SPA (`isSupabaseConfigured`).
+
+
+## Coding agent architecture
+
+Chronos orchestrates specialized engineering agents instead of relying on a single coding model.
+
+### Engineering agents
+
+- **Coder** — understands tasks, edits code, runs terminal commands, and iterates until validation succeeds.
+- **Reviewer** — reviews architecture, style, and complexity before changes are accepted.
+- **Test Engineer** — generates tests, reproduces bugs, and prevents regressions.
+- **Security Auditor** — checks secrets, dependencies, authentication, and common vulnerabilities.
+- **DevOps** — manages CI/CD, containers, infrastructure, and deployments.
+- **Documentation** — maintains docs, changelogs, and migration guides.
+
+### Coding principles
+
+Every implementation should:
+
+1. Understand the objective.
+2. Inspect the codebase before editing.
+3. Plan the smallest safe change.
+4. Implement incrementally.
+5. Run lint, typecheck, and tests.
+6. Automatically iterate on failures.
+7. Present a concise diff and summary.
+8. Clearly distinguish current implementation from roadmap proposals.
+
+### Decision-driven implementation
+
+Chronos may evaluate multiple implementation strategies before selecting one:
+
+- Branch candidate implementations.
+- Execute validation (tests, lint, performance, security).
+- Score outcomes.
+- Collapse to the highest-confidence solution.
